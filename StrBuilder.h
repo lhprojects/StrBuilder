@@ -164,3 +164,17 @@ private:
 	size_t fLen;
 	size_t fCap;
 };
+
+template<class... Args>
+std::string Fmt(char const *fmt, Args... args) {
+	StrBuilder sb;
+	sb.Fmt(fmt, args...);
+	return std::string(sb.Data(), sb.Length());
+}
+
+template<class... Args>
+std::string FmtLn(char const *fmt, Args... args) {
+	StrBuilder sb;
+	sb.FmtLn(fmt, args...);
+	return std::string(sb.Data(), sb.Length());
+}
