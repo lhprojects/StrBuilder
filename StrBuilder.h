@@ -116,6 +116,14 @@ public:
 		}
 	}
 
+	template<class... Args>
+	StrBuilder &FmtLn(char const * fmt, Args... args) {
+		Fmt(fmt, args);
+		_Append("\n");
+		return *this;
+	}
+
+
 private:
 	template<class... Args>
 	void _Append(char const *str, size_t len) {
