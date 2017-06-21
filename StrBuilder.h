@@ -21,6 +21,10 @@ public:
 		return b;
 	}
 
+	char const *Data() {
+		return fBuf;
+	}
+
 	~StrBuilder() {
 		if (fBuf) delete fBuf;
 	}
