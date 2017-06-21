@@ -104,7 +104,7 @@ public:
 	}
 
 	template<class Arg0, class... Args>
-	StrBuilder &Fmt(char const * fmt, Arg0 arg0, Args... args) {
+	StrBuilder &Fmt(char const * fmt, Arg0&& arg0, Args&&... args) {
 		char const *b = fmt;
 		for (size_t i = 0; fmt[i]; ++i) {
 			if (fmt[i] == '%') {
@@ -114,28 +114,29 @@ public:
 				} else {
 					_Append(b, fmt + i - b);
 					App(arg0);
-					return Fmt(fmt + i + 1, args...);
+					return Fmt(fmt + i + 1, std::forward<Args>(args)...);
 				}
 			}
 		}
-		throw std::exception("there are unused parameter(s)");
+		throw std::logic_error("there are unused parameter(s)");
 		return *this;
 	}
 	
 	StrBuilder &Fmt(char const * fmt) {
-		char const *b = fmt;
-		for (size_t i = 0; fmt[i]; ++i) {
+        size_t i = 0;
+		for ( ; fmt[i]; ++i) {
 			if (fmt[i] == '%') {
-				throw std::exception("there are too many %");
+				throw std::logic_error("there are too many %");
 			}
 		}
+        _Append(fmt, i);
 		return *this;
 	}
 
 	template<class... Args>
-	StrBuilder &FmtLn(char const * fmt, Args... args) {
-		Fmt(fmt, args);
-		_Append("\n");
+	StrBuilder &FmtLn(char const * fmt, Args&&... args) {
+		Fmt(fmt, std::forward<Args>(args)...);
+		_Append("\n", 1);
 		return *this;
 	}
 
