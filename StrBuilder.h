@@ -25,6 +25,10 @@ public:
 		return fBuf;
 	}
 
+	size_t Length() {
+		return fLen;
+	}
+
 	~StrBuilder() {
 		if (fBuf) delete fBuf;
 	}
@@ -57,6 +61,12 @@ public:
 	template<class... Args>
 	StrBuilder &App(char const *str, Args... args) {
 		_Append(str, strlen(str));
+		return App(args...);
+	}
+
+	template<class... Args>
+	StrBuilder &App(StrBuilder const &str, Args... args) {
+		_Append(str.Data(), str.Length());
 		return App(args...);
 	}
 
