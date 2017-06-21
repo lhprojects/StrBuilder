@@ -119,6 +119,7 @@ public:
 			}
 		}
 		throw std::exception("there are unused parameter(s)");
+		return *this;
 	}
 	
 	StrBuilder &Fmt(char const * fmt) {
@@ -128,6 +129,7 @@ public:
 				throw std::exception("there are too many %");
 			}
 		}
+		return *this;
 	}
 
 	template<class... Args>
