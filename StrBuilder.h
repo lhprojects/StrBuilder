@@ -21,16 +21,19 @@ public:
 		return b;
 	}
 
-	char const *Data() {
+	char const *Data() const {
 		return fBuf;
 	}
 
-	size_t Length() {
+	size_t Length() const {
 		return fLen;
 	}
 
 	~StrBuilder() {
-		if (fBuf) delete fBuf;
+		if (fBuf) {
+            delete fBuf;
+            fBuf = NULL;
+        }
 	}
 
 	StrBuilder(char const *str) {
@@ -142,7 +145,6 @@ public:
 
 
 private:
-	template<class... Args>
 	void _Append(char const *str, size_t len) {
 		if (len != 0) {
 			if (fLen + len >= fCap) {
