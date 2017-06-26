@@ -482,6 +482,7 @@ public:
 		fBuf = fStaticBuf;
 		fLen = 0;
 		fCap = 7;
+		fBuf[0] = '\0';
 	}
 
 private:
