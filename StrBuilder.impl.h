@@ -248,9 +248,11 @@ namespace strbuilder {
 		size_t argIdx = 0;
 
 		char const *last = fmt;
-		for (; fmt[0];) {	
-
-			if (fmt[0] == '%') {
+		for (; ;)
+		{
+			char const *new_fmt = strchr(fmt, '%');
+			if (new_fmt) {
+				fmt = new_fmt;
 				if (fmt[1] == '%') {
 					++fmt;
 					_Append(last, fmt - last);
@@ -449,8 +451,9 @@ namespace strbuilder {
 						break;
 					}
 				}
-			} else {
-			   ++fmt;
+			} else { // if(fmt = strchr(fmt, '%'))
+			    fmt = fmt + strlen(fmt);
+				break;
 			}
 		}
 		_Append(last, fmt - last);
