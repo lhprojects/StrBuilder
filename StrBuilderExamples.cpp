@@ -1,13 +1,19 @@
 
 #include "StrBuilder.h"
+#include <chrono>
+using namespace strbuilder;
 
-#define ASSERT(x, y) if(strcmp(x, y) != 0) { printf("failed: %s != %s\n", x, y); }
+#define ASSERT(x, y) if(strcmp(x, y) != 0) { printf("failed %5d: %s != %s\n", __LINE__, x, y); }
+
 int main() {
+
+	char32_t c = 0;
+	auto x = c + -1;
+	4l;
 	char b[1024];
 	StrBuilder sb;
 
-
-	sb.Fmt("%3d", 1);
+ 	sb.Fmt("%3d", 1);
 	sprintf(b, "%3d", 1);
 	ASSERT(sb.Data(), b);
 	sb.Clear();
@@ -32,7 +38,7 @@ int main() {
 	ASSERT(sb.Data(), b);
 	sb.Clear();
 
-	sb.Fmt("%3d", (unsigned short) - 1);
+	sb.Fmt("%3d", (unsigned short) -1);
 	sprintf(b, "%3u", (unsigned short) - 1);
 	ASSERT(sb.Data(), b);
 	sb.Clear();
@@ -67,19 +73,29 @@ int main() {
 	ASSERT(sb.Data(), b);
 	sb.Clear();
 
+	sb.Fmt("%c", u'a');
+	sprintf(b, "%c", u'a');
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+	sb.Fmt("%d", U'a');
+	sprintf(b, "%u", (uint32_t)U'a');
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
 
 	sb.Fmt("%3.3f", 1.1);
 	sprintf(b, "%3.3f", 1.1);
 	ASSERT(sb.Data(), b);
 	sb.Clear();
 
-	sb.Fmt("%3s", "abc");
-	sprintf(b, "%3s", "abc");
+	sb.Fmt("%3s", "dd");
+	sprintf(b, "%3s", "dd");
 	ASSERT(sb.Data(), b);
 	sb.Clear();
 
-	sb.Fmt("%6s", std::string("abc"));
-	sprintf(b, "%6s", "abc");
+	sb.Fmt("%6s", std::string("fsss"));
+	sprintf(b, "%6s", "fsss");
 	ASSERT(sb.Data(), b);
 	sb.Clear();
 
@@ -87,6 +103,48 @@ int main() {
 	sb.Fmt("%6p", a_pointer);
 	sprintf(b, "%6p", a_pointer);
 	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+	StrBuilder * ab_pointer = &sb;
+	sb.Fmt("%6p", ab_pointer);
+	sprintf(b, "%6p", ab_pointer);
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+	char const * str = "def";
+	sb.Fmt("%6p", str);
+	sprintf(b, "%6p", str);
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+	char const arr[] = "def";
+	sb.Fmt("%6p", arr);
+	sprintf(b, "%6p", arr);
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+	try {
+		sb.Fmt("", 1);
+	}
+	catch (...) {
+		printf("faield %s", R"--(	sb.Fmt("", 1)		)--");
+	}
+	sb.Clear();
+
+	try {
+		sb.Fmt("%d%d", 1);
+		printf("faield %s", R"--(	sb.Fmt("%d%d", 1)		)--");
+	}
+	catch (...) {
+	}
+	sb.Clear();
+
+	try {
+		sb.Fmt("%i", &sb);
+		printf("faield %s", R"--(	sb.Fmt("%i", &sb)		)--");
+	}
+	catch (...) {
+	}
 	sb.Clear();
 
 	try {
@@ -113,4 +171,41 @@ int main() {
 	}
 	sb.Clear();
 
+	sb.Fmt("%3d %3d", 1, 2);
+	sprintf(b, "%3d %3d", 1, 2);
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+	sb.Fmt("%%abc");
+	sprintf(b, "%%abc");
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+	sb.Fmt(" %%abc");
+	sprintf(b, " %%abc");
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+	sb.Fmt(" %%");
+	sprintf(b, " %%");
+	ASSERT(sb.Data(), b);
+	sb.Clear();
+
+
+	{
+		std::string lstr = "ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+		lstr += lstr;
+		auto t0 = std::chrono::high_resolution_clock::now();
+		for (int i = 0; i < 10000; ++i)
+		{
+			sb.Fmt(lstr.c_str());
+			sb.Clear();
+		}
+		auto t1 = std::chrono::high_resolution_clock::now();
+		printf("fmt long str %lldus\n", (long long)std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
+	}
+
+
 }
+
+#include "StrBuilder.impl.h"
