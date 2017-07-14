@@ -105,44 +105,39 @@ namespace strbuilder {
 		char fStaticBuf[32];
 	};
 
-	struct FmtBuffer
+	struct ArgFmt
 	{
-		FmtBuffer(char const *fmt, size_t n) {
-			if (n + 1 < sizeof(fStaticBuf)) {
-				fBuf = fStaticBuf;
-			} else {
-				fBuf = new char[n + 1];
-			}
-			memcpy(fBuf, fmt, n);
-			fBuf[n] = '\0';
-		}
-		FmtBuffer(char const *fmt, size_t n, char spec) {
-			if (n + 1 < sizeof(fStaticBuf)) {
-				fBuf = fStaticBuf;
-			} else {
-				fBuf = new char[n + 1];
-			}
-			memcpy(fBuf, fmt, n);
-			fBuf[n - 1] = spec;
-			fBuf[n] = '\0';
-		}
+		size_t width;
+		size_t precision;
+		char flags;
+		char specfier;
 
-		~FmtBuffer() {
-			if (fBuf != fStaticBuf) {
-				delete[] fBuf;
+		char const *Str() {
+			char *b = buf;
+			*b++ = '%';
+			if (flags) {
+				*b++ = flags;
 			}
+			if (width < SIZE_MAX/2) {
+				b += sprintf(b, "%zd", width);
+			}
+			if (precision < SIZE_MAX/2) {
+				*b++ = '.';
+				b += sprintf(b, "%zd", precision);
+			}
+			*b++ = specfier;
+			*b++ = '\0';
+			return buf;
 		}
-		char *fBuf;
-	private:
-		char fStaticBuf[32];
-
+		char buf[100];
 	};
 	
+	class StrAppender;
 	template<class T>
 	struct CustomTrait
 	{
 		static const bool value = false;
-		static void ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data) {
+		static void ToStr(StrAppender &sa, ArgFmt &fmt, void const *data) {
 			throw std::logic_error("you should implements the StringTrait::ToStr for string");
 		}
 	};
@@ -151,7 +146,7 @@ namespace strbuilder {
 	struct CustomTrait<std::string>
 	{
 		static const bool value = true;
-		static void ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data);
+		static void ToStr(StrAppender &sa, ArgFmt &fmt, void const *data);
 	};
 
 #ifdef ROOT_TString
@@ -159,7 +154,7 @@ namespace strbuilder {
 	struct CustomTrait<TString>
 	{
 		static const bool value = true;
-		static void ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data);
+		static void ToStr(DataBuffer &sb, ArgFmt &fmt, void const *data);
 	};
 #endif
 
@@ -167,7 +162,7 @@ namespace strbuilder {
 	{
 		FmtArgType fType;
 		void const *fData;
-		void(*fToStr)(DataBuffer &b, char const *fmt, size_t n, void const *data);
+		void(*fToStr)(StrAppender &b, ArgFmt &fmt, void const *data);
 
 		bool isChar() const;
 		bool isIntegral() const;
@@ -200,96 +195,6 @@ namespace strbuilder {
 		static typename std::enable_if<CustomTrait<T>::value,
 			FmtArgType>::type GetFmtArgType(T const &) { return Custom; }
 	};
-
-	namespace details {
-
-
-
-		template<class T>
-		bool is_char(T const &) {
-			return false;
-		}
-
-		template<>
-		bool is_char(char const &) {
-			return true;
-		}
-		template<>
-		bool is_char(signed char const &) {
-			return true;
-		}
-		template<>
-		bool is_char(unsigned char const &) {
-			return true;
-		}
-
-		template<class T>
-		bool is_pointer(T const &) {
-			return false;
-		}
-
-		template<class T>
-		bool is_pointer(T const * const &) {
-			return true;
-		}
-
-		template<class T>
-		bool is_pointer(T * const &) {
-			return true;
-		}
-
-		template<class T, size_t n>
-		bool is_pointer(T const (&)[n]) {
-			return true;
-		}
-
-		template<class T, size_t n>
-		bool is_pointer(T(&)[n]) {
-			return true;
-		}
-
-		template<class T>
-		bool is_string(T const &) {
-			return false;
-		}
-
-		template<>
-		bool is_string(std::string const &str) {
-			return true;
-		}
-
-		template<>
-		bool is_string(char const * const &str) {
-			return true;
-		}
-
-		template<size_t n>
-		bool is_string(char const (&str)[n]) {
-			return true;
-		}
-
-		template<class T>
-		bool is_signed(T const &) {
-			return std::is_signed<T>::value;
-		}
-
-		template<class T>
-		bool is_unsigned(T const &) {
-			return std::is_unsigned<T>::value;
-		}
-
-		template<class T>
-		bool is_integral(T const &) {
-			return std::is_integral<T>::value;
-		}
-
-		template<class T>
-		bool is_floating_point(T const &) {
-			return std::is_floating_point<T>::value;
-		}
-
-	}
-
 
 	class StrBuilder
 	{
@@ -385,8 +290,12 @@ namespace strbuilder {
 
 		void VFmt(char const *fmt, FmtArg const args[], size_t nargs);
 
-		void _Append(char const *str, size_t len);
+		void Append(char const *str, size_t len) { _Append(str, len); }
+		void AppendN(char c, size_t len) { _AppendN(c, len); }
 	private:
+		// for internal use, currently it's same as public version Append
+		void _Append(char const *str, size_t len);
+		void _AppendN(char c, size_t len);
 
 		template<size_t N, class Arg0, class... Args>
 		void _FillFmt(char const * const fmt, std::array<FmtArg, N> &fmtArgs, Arg0 const &arg0, Args const &... args)
@@ -436,5 +345,41 @@ namespace strbuilder {
 		sb.FmtLn(fmt, args...);
 		return std::string(sb.Data(), sb.Length());
 	}
+
+	template<class... Args>
+	void Print(char const *fmt, Args... args) {
+		StrBuilder sb;
+		sb.Fmt(fmt, args...);
+		printf("%s", sb.Data());
+	}
+
+	template<class... Args>
+	void PrintLn(char const *fmt, Args... args) {
+		StrBuilder sb;
+		sb.Fmt(fmt, args...);
+		printf("%s\n", sb.Data());
+	}
+
+
+	class StrAppender
+	{
+		StrBuilder &sb;
+	public:
+		StrAppender(StrBuilder &sb_) : sb(sb_) { }
+		StrAppender &Append(char const *data, size_t len) {
+			sb.Append(data, len);
+			return *this;
+		}
+		StrAppender &AppendN(char c, size_t len) {
+			sb.AppendN(c, len);
+			return *this;
+		}
+		template<class... Args>
+		StrAppender &Fmt(char const * const fmt, Args const &... args)
+		{
+			sb.Fmt(fmt, args...);
+			return *this;
+		}
+	};
 
 }

@@ -70,6 +70,7 @@ namespace strbuilder {
 
 		void setSpec(char const *fmt, size_t n, char spec, long double) {
 			init(fmt, n);
+			fBuf[n++] = 'L';
 			fBuf[n++] = spec;
 			fBuf[n++] = '\0';
 		}
@@ -111,7 +112,7 @@ namespace strbuilder {
 				data.Double();
 			}
 		}
-		sb._Append(data.fBuf, n_write);
+		sb.Append(data.fBuf, n_write);
 	}
 
 	char *StrBuilder::Clone() const {
@@ -169,6 +170,23 @@ namespace strbuilder {
 		return *this;
 	}
 
+	void StrBuilder::_AppendN(char c, size_t len) {
+		if (len != 0) {
+			if (fLen + len >= fCap) {
+				for (; fCap <= fLen + len; fCap *= 3, fCap /= 2) {
+				}
+				char *b = new char[fCap];
+				memcpy(b, fBuf, fLen);
+				if (fBuf != fStaticBuf) delete fBuf;
+				fBuf = b;
+			}
+			assert(fBuf);
+			memset(fBuf + fLen, c, len);
+			fLen += len;
+			fBuf[fLen] = '\0';
+		}
+	}
+
 	void StrBuilder::_Append(char const *str, size_t len) {
 		if (len != 0) {
 			if (fLen + len >= fCap) {
@@ -218,16 +236,17 @@ namespace strbuilder {
 		return fType == C_Str;
 	}
 
-	void CustomTrait<std::string>::ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data)
+	void CustomTrait<std::string>::ToStr(StrAppender &sa, ArgFmt &fmt, void const *data)
 	{
-		FmtBuffer fb(fmt, n);
-		char const *str = (*(std::string*)data).c_str();
-		for (;;) {
-			if (snprintf(sb.fBuf, sb.fLen, fb.fBuf, str) >= 0) {
-				break;
-			}
-			sb.Double();
+		auto &str =  *(std::string*)data;
+		if (fmt.width > str.size()) {
+			size_t off = fmt.width - str.size();
+			sa.AppendN(' ', off);
+			sa.Append(str.data(), str.size());
+		} else {
+			sa.Append(str.data(), str.size());
 		}
+
 	}
 
 #ifdef ROOT_TString
@@ -243,6 +262,86 @@ namespace strbuilder {
 		}
 	}
 #endif
+
+	void covert_to_double(double &a_double, FmtArg &arg)
+	{
+		switch (arg.fType)
+		{
+		case Char:
+			a_double = *(char*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case Char16:
+			a_double = *(char16_t*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case Char32:
+			a_double = *(char32_t*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case SignedChar:
+			a_double = *(signed char*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case Short:
+			a_double = *(short*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case Int:
+			a_double = *(int*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case Long:
+			a_double = *(long*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case LongLong:
+			a_double = (double)*(long long*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case UnsignedChar:
+			a_double = *(unsigned char*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case UnsignedShort:
+			a_double = *(unsigned short*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case UnsignedInt:
+			a_double = *(unsigned int*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case UnsignedLong:
+			a_double = *(unsigned long*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case UnsignedLongLong:
+			a_double = (double)*(unsigned long long*)arg.fData;
+			arg.fData = &a_double;
+			arg.fType = Double;
+			break;
+		case Double:
+		case Float:
+		case LongDouble:
+			break;
+		default:
+			throw std::logic_error("arg0 is not floating point!");
+			break;
+		}
+	}
+
 	void StrBuilder::VFmt(char const *fmt, FmtArg const args[], size_t nargs)
 	{
 		size_t argIdx = 0;
@@ -264,35 +363,51 @@ namespace strbuilder {
 					++fmt; // read `%'
 
 					// read flags
+					char flags = '\0';
 					if (fmt[0] == '-' ||
 						fmt[0] == '+' ||
 						fmt[0] == '#' ||
 						fmt[0] == '0') {
+						flags = fmt[0];
 						++fmt;
 					}
 
 					// read width
-					size_t width = 0;
+					size_t width = -1;
 					const size_t max_size = (size_t)-1;
 					const size_t max_size_div_by_10 = max_size / 10;
-
-					for (; fmt[0] >= '0' && fmt[0] <= '9'; ++fmt) {
-						if (width > max_size_div_by_10) {
-							throw std::runtime_error("too large width!");
-						} else {
-							width *= 10;
-							size_t old_width = width;
-							width += fmt[0] - '0';
-							if (width < old_width) {
+					if (fmt[0] >= '0' && fmt[0] <= '9') {
+						width = 0;
+						for (; fmt[0] >= '0' && fmt[0] <= '9'; ++fmt) {
+							if (width > max_size_div_by_10) {
 								throw std::runtime_error("too large width!");
+							} else {
+								width *= 10;
+								size_t old_width = width;
+								width += fmt[0] - '0';
+								if (width < old_width) {
+									throw std::runtime_error("too large width!");
+								}
 							}
 						}
 					}
-
+					
+					size_t precision = -1;
 					// precision
 					if (fmt[0] == '.') {
 						++fmt;
+						precision = 0;
 						for (; fmt[0] >= '0' && fmt[0] <= '9'; ++fmt) {
+							if (precision > max_size_div_by_10) {
+								throw std::runtime_error("too large precision!");
+							} else {
+								precision *= 10;
+								size_t old_width = precision;
+								precision += fmt[0] - '0';
+								if (precision < old_width) {
+									throw std::runtime_error("too large precision!");
+								}
+							}
 						}
 					}
 
@@ -305,14 +420,19 @@ namespace strbuilder {
 					if (argIdx >= nargs) {
 						throw std::runtime_error("too less arg!");
 					}
-					FmtArg const &arg = args[argIdx];
+					FmtArg arg = args[argIdx];
 					argIdx++;
 
 					if (arg.fType == Custom) {
-						DataBuffer db;
-						arg.fToStr(db, fmt_, nfmt_ + 1, arg.fData);
-						_Append(db.fBuf, db.fLen);
+						ArgFmt argFmt;
+						argFmt.width = width;
+						argFmt.precision = precision;
+						argFmt.flags = flags;
+						argFmt.specfier = spec;
+						StrAppender sa(*this);
+						arg.fToStr(sa, argFmt, arg.fData);
 					} else {
+						double a_double;
 						switch (spec)
 						{
 						case 'd': // signed or unsigned integers
@@ -358,9 +478,7 @@ namespace strbuilder {
 						case 'a': // float or double
 						case 'A': // float or double
 						{
-							if (!arg.isFloating()) {
-								throw std::logic_error("arg0 is not floating point!");
-							}
+							covert_to_double( a_double, arg);
 							break;
 						}
 						case 'c': // char
@@ -437,11 +555,11 @@ namespace strbuilder {
 						case Double:
 							_Append1(*this, fmt_, nfmt_, *(double*)arg.fData, spec);
 							break;
-						case Float:
-							_Append1(*this, fmt_, nfmt_, *(float*)arg.fData, spec);
 						case LongDouble:
 							_Append1(*this, fmt_, nfmt_, *(long double*)arg.fData, spec);
 							break;
+						case Float:
+							_Append1(*this, fmt_, nfmt_, *(float*)arg.fData, spec);
 						case C_Str:
 							_Append1(*this, fmt_, nfmt_, *(char const**)arg.fData, spec);
 							break;

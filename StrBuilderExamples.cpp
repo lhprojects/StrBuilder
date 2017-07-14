@@ -8,11 +8,13 @@ using namespace strbuilder;
 
 int main() {
 
-	char32_t c = 0;
-	auto x = c + -1;
-	4l;
 	char b[1024];
 	StrBuilder sb;
+
+	sb.Fmt("%3d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+	sprintf(b, "%3d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+	ASSERT(sb.Data(), b);
+	sb.Clear();
 
  	sb.Fmt("%3d", 1);
 	sprintf(b, "%3d", 1);
@@ -194,6 +196,26 @@ int main() {
 
 
 	{
+		using namespace std::chrono;
+		auto t = 5.0ms;
+		sb.Fmt("%9.2m", t);
+		sprintf(b, "%7.2fms", 5.0);
+		ASSERT(sb.Data(), b);
+		sb.Clear();
+
+	}
+
+	{
+		using namespace std::chrono;
+		auto t = 5.0ms;
+		sb.Fmt("%1.2m", t);
+		sprintf(b, "%1.2fms", 5.0);
+		ASSERT(sb.Data(), b);
+		sb.Clear();
+
+	}
+
+	{
 		std::string lstr = "ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
 		lstr += lstr;
 		auto t0 = std::chrono::high_resolution_clock::now();
@@ -204,7 +226,7 @@ int main() {
 		}
 		auto t1 = std::chrono::high_resolution_clock::now();
 		auto t3 = t1 - t0;
-		printf("fmt long str %s\n", Fmt("%m", t1 - t0).c_str());
+		PrintLn("benchmark %20u", t1 - t0);
 	}
 
 
