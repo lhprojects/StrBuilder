@@ -1,5 +1,6 @@
 
 #include "StrBuilder.h"
+#include "StrBuilderForTime.h"
 #include <chrono>
 using namespace strbuilder;
 
@@ -202,7 +203,8 @@ int main() {
 			sb.Clear();
 		}
 		auto t1 = std::chrono::high_resolution_clock::now();
-		printf("fmt long str %lldus\n", (long long)std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
+		auto t3 = t1 - t0;
+		printf("fmt long str %s\n", Fmt("%m", t1 - t0).c_str());
 	}
 
 

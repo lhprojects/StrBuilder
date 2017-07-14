@@ -64,7 +64,7 @@ namespace strbuilder {
 		LongDouble,
 		Pointer,
 		C_Str, // pointer to char
-		String,
+		Custom,
 
 	};
 
@@ -116,6 +116,16 @@ namespace strbuilder {
 			memcpy(fBuf, fmt, n);
 			fBuf[n] = '\0';
 		}
+		FmtBuffer(char const *fmt, size_t n, char spec) {
+			if (n + 1 < sizeof(fStaticBuf)) {
+				fBuf = fStaticBuf;
+			} else {
+				fBuf = new char[n + 1];
+			}
+			memcpy(fBuf, fmt, n);
+			fBuf[n - 1] = spec;
+			fBuf[n] = '\0';
+		}
 
 		~FmtBuffer() {
 			if (fBuf != fStaticBuf) {
@@ -129,7 +139,7 @@ namespace strbuilder {
 	};
 	
 	template<class T>
-	struct StringTrait
+	struct CustomTrait
 	{
 		static const bool value = false;
 		static void ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data) {
@@ -138,7 +148,7 @@ namespace strbuilder {
 	};
 
 	template< >
-	struct StringTrait<std::string>
+	struct CustomTrait<std::string>
 	{
 		static const bool value = true;
 		static void ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data);
@@ -146,7 +156,7 @@ namespace strbuilder {
 
 #ifdef ROOT_TString
 	template< >
-	struct StringTrait<TString>
+	struct CustomTrait<TString>
 	{
 		static const bool value = true;
 		static void ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data);
@@ -187,8 +197,8 @@ namespace strbuilder {
 		static FmtArgType GetFmtArgType(void *) { return Pointer; }
 		
 		template<class T>
-		static typename std::enable_if<StringTrait<T>::value,
-			FmtArgType>::type GetFmtArgType(T const &) { return String; }
+		static typename std::enable_if<CustomTrait<T>::value,
+			FmtArgType>::type GetFmtArgType(T const &) { return Custom; }
 	};
 
 	namespace details {
@@ -362,7 +372,7 @@ namespace strbuilder {
 			std::array<FmtArg, sizeof...(args)> fmtArgs;
 			// we use decay_t<Args>(args) here to convert args of array a[n] to pointer
 			// so that &arg will obtain the address of the the  address to array
-			_FillFmt(fmt, fmtArgs, (std::decay<Args>::type) (args)...);
+			_FillFmt(fmt, fmtArgs, args...);
 			return *this;
 		}
 
@@ -383,7 +393,19 @@ namespace strbuilder {
 		{
 			FmtArg fmtArg0;
 			fmtArg0.fData = &arg0;
-			fmtArg0.fToStr = StringTrait<Arg0>::ToStr;
+			fmtArg0.fToStr = CustomTrait<Arg0>::ToStr;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			fmtArgs[N - sizeof...(args)-1] = fmtArg0;
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, size_t N1, class... Args>
+		void _FillFmt(char const * const fmt, std::array<FmtArg, N> &fmtArgs, char const (&arg0)[N1], Args const &... args)
+		{
+			FmtArg fmtArg0;
+			char const *arg0_ = arg0;
+			fmtArg0.fData = &arg0_;
+			fmtArg0.fToStr = CustomTrait<char const*>::ToStr;
 			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
 			fmtArgs[N - sizeof...(args)-1] = fmtArg0;
 			_FillFmt(fmt, fmtArgs, args...);

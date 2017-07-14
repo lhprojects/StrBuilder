@@ -215,10 +215,10 @@ namespace strbuilder {
 	}
 
 	bool FmtArg::isString() const {
-		return fType == C_Str || fType == String;
+		return fType == C_Str;
 	}
 
-	void StringTrait<std::string>::ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data)
+	void CustomTrait<std::string>::ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data)
 	{
 		FmtBuffer fb(fmt, n);
 		char const *str = (*(std::string*)data).c_str();
@@ -231,7 +231,7 @@ namespace strbuilder {
 	}
 
 #ifdef ROOT_TString
-	void StringTrait<std::string>::ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data)
+	void CustomTrait<std::string>::ToStr(DataBuffer &sb, char const *fmt, size_t n, void const *data)
 	{
 		FmtBuffer fb(fmt, n);
 		char const *str = *(TString*)data;
@@ -307,152 +307,155 @@ namespace strbuilder {
 					}
 					FmtArg const &arg = args[argIdx];
 					argIdx++;
-					switch (spec)
-					{
-					case 'd': // signed or unsigned integers
-					{
-						if (arg.isSigned()) {
-							spec = 'i';
-						} else if (arg.isUnsigned()) {
-							spec = 'u';
-						} else {
-							throw std::runtime_error("arg is not integral!");
-						}
-						break;
-					}
-					case 'o':
-					case 'x':
-					case 'X':
-					{
-						if (!arg.isIntegral()) {
-							throw std::logic_error("arg0 is not integral!");
-						}
-						break;
-					}
-					case 'i':
-					{
-						if (!arg.isSigned()) {
-							throw std::logic_error("arg is not signed!");
-						}
-						break;
-					}
-					case 'u': // unsigned integers
-					{
-						if (!arg.isUnsigned()) {
-							throw std::logic_error("arg is not unsigned!");
-						}
-						break;
-					}
-					case 'f': // float or double
-					case 'F': // float or double
-					case 'e': // float or double
-					case 'E': // float or double
-					case 'g': // float or double
-					case 'G': // float or double
-					case 'a': // float or double
-					case 'A': // float or double
-					{
-						if (!arg.isFloating()) {
-							throw std::logic_error("arg0 is not floating point!");
-						}
-						break;
-					}
-					case 'c': // char
-					{
-						if (!arg.isChar()) {
-							throw std::logic_error("arg is not unsigned!");
-						}
-						break;
-					}
-					case 's': // std::string or char const*
-					{
-						if (!arg.isString()) {
-							throw std::logic_error("arg is not string!");
-						}
-						break;
-					}
-					case 'p': // pointer
-					{
-						if (!arg.isPointer()) {
-							throw std::logic_error("arg is not pointer!");
-						}
-						break;
-					}
-					case 'n': // any type
-						throw std::logic_error("%n is not supported!");
-						break;
-					default:
-						break;
-					}
-					switch (arg.fType)
-					{
-					case Char:
-						_Append1(*this, fmt_, nfmt_, *(char*)arg.fData, spec);
-						break;
-					case Char16:
-						_Append1(*this, fmt_, nfmt_, *(char16_t*)arg.fData, spec);
-						break;
-					case Char32:
-						_Append1(*this, fmt_, nfmt_, *(char32_t*)arg.fData, spec);
-						break;
-					case SignedChar:
-						_Append1(*this, fmt_, nfmt_, *(signed char*)arg.fData, spec);
-						break;
-					case Short:
-						_Append1(*this, fmt_, nfmt_, *(short*)arg.fData, spec);
-						break;
-					case Int:
-						_Append1(*this, fmt_, nfmt_, *(int*)arg.fData, spec);
-						break;
-					case Long:
-						_Append1(*this, fmt_, nfmt_, *(long*)arg.fData, spec);
-						break;
-					case LongLong:
-						_Append1(*this, fmt_, nfmt_, *(long long*)arg.fData, spec);
-						break;
-					case UnsignedChar:
-						_Append1(*this, fmt_, nfmt_, *(unsigned char*)arg.fData, spec);
-						break;
-					case UnsignedShort:
-						_Append1(*this, fmt_, nfmt_, *(unsigned short*)arg.fData, spec);
-						break;
-					case UnsignedInt:
-						_Append1(*this, fmt_, nfmt_, *(unsigned int*)arg.fData, spec);
-						break;
-					case UnsignedLong:
-						_Append1(*this, fmt_, nfmt_, *(unsigned long*)arg.fData, spec);
-						break;
-					case UnsignedLongLong:
-						_Append1(*this, fmt_, nfmt_, *(unsigned long long*)arg.fData, spec);
-						break;
-					case Double:
-						_Append1(*this, fmt_, nfmt_, *(double*)arg.fData, spec);
-						break;
-					case Float:
-						_Append1(*this, fmt_, nfmt_, *(float*)arg.fData, spec);
-					case LongDouble:
-						_Append1(*this, fmt_, nfmt_, *(long double*)arg.fData, spec);
-						break;
-					case C_Str:
-						_Append1(*this, fmt_, nfmt_, *(char const**)arg.fData, spec);
-						break;
-					case Pointer:
-						_Append1(*this, fmt_, nfmt_, *(void **)arg.fData, spec);
-						break;
-					case String:
-					{
+
+					if (arg.fType == Custom) {
 						DataBuffer db;
 						arg.fToStr(db, fmt_, nfmt_ + 1, arg.fData);
 						_Append(db.fBuf, db.fLen);
-						break;
-					}
-					default:
-						throw std::logic_error("unknow type!");
-						break;
+					} else {
+						switch (spec)
+						{
+						case 'd': // signed or unsigned integers
+						{
+							if (arg.isSigned()) {
+								spec = 'i';
+							} else if (arg.isUnsigned()) {
+								spec = 'u';
+							} else {
+								throw std::runtime_error("arg is not integral!");
+							}
+							break;
+						}
+						case 'o':
+						case 'x':
+						case 'X':
+						{
+							if (!arg.isIntegral()) {
+								throw std::logic_error("arg0 is not integral!");
+							}
+							break;
+						}
+						case 'i':
+						{
+							if (!arg.isSigned()) {
+								throw std::logic_error("arg is not signed!");
+							}
+							break;
+						}
+						case 'u': // unsigned integers
+						{
+							if (!arg.isUnsigned()) {
+								throw std::logic_error("arg is not unsigned!");
+							}
+							break;
+						}
+						case 'f': // float or double
+						case 'F': // float or double
+						case 'e': // float or double
+						case 'E': // float or double
+						case 'g': // float or double
+						case 'G': // float or double
+						case 'a': // float or double
+						case 'A': // float or double
+						{
+							if (!arg.isFloating()) {
+								throw std::logic_error("arg0 is not floating point!");
+							}
+							break;
+						}
+						case 'c': // char
+						{
+							if (!arg.isChar()) {
+								throw std::logic_error("arg is not unsigned!");
+							}
+							break;
+						}
+						case 's': // std::string or char const*
+						{
+							if (!arg.isString()) {
+								throw std::logic_error("arg is not string!");
+							}
+							break;
+						}
+						case 'p': // pointer
+						{
+							if (!arg.isPointer()) {
+								throw std::logic_error("arg is not pointer!");
+							}
+							break;
+						}
+						case 'n': // any type
+							throw std::logic_error("%n is not supported!");
+							break;
+						default:
+						{
+							throw std::logic_error("unkown specifier is not supported!");
+							break;
+						}
+						}
+						switch (arg.fType)
+						{
+						case Char:
+							_Append1(*this, fmt_, nfmt_, *(char*)arg.fData, spec);
+							break;
+						case Char16:
+							_Append1(*this, fmt_, nfmt_, *(char16_t*)arg.fData, spec);
+							break;
+						case Char32:
+							_Append1(*this, fmt_, nfmt_, *(char32_t*)arg.fData, spec);
+							break;
+						case SignedChar:
+							_Append1(*this, fmt_, nfmt_, *(signed char*)arg.fData, spec);
+							break;
+						case Short:
+							_Append1(*this, fmt_, nfmt_, *(short*)arg.fData, spec);
+							break;
+						case Int:
+							_Append1(*this, fmt_, nfmt_, *(int*)arg.fData, spec);
+							break;
+						case Long:
+							_Append1(*this, fmt_, nfmt_, *(long*)arg.fData, spec);
+							break;
+						case LongLong:
+							_Append1(*this, fmt_, nfmt_, *(long long*)arg.fData, spec);
+							break;
+						case UnsignedChar:
+							_Append1(*this, fmt_, nfmt_, *(unsigned char*)arg.fData, spec);
+							break;
+						case UnsignedShort:
+							_Append1(*this, fmt_, nfmt_, *(unsigned short*)arg.fData, spec);
+							break;
+						case UnsignedInt:
+							_Append1(*this, fmt_, nfmt_, *(unsigned int*)arg.fData, spec);
+							break;
+						case UnsignedLong:
+							_Append1(*this, fmt_, nfmt_, *(unsigned long*)arg.fData, spec);
+							break;
+						case UnsignedLongLong:
+							_Append1(*this, fmt_, nfmt_, *(unsigned long long*)arg.fData, spec);
+							break;
+						case Double:
+							_Append1(*this, fmt_, nfmt_, *(double*)arg.fData, spec);
+							break;
+						case Float:
+							_Append1(*this, fmt_, nfmt_, *(float*)arg.fData, spec);
+						case LongDouble:
+							_Append1(*this, fmt_, nfmt_, *(long double*)arg.fData, spec);
+							break;
+						case C_Str:
+							_Append1(*this, fmt_, nfmt_, *(char const**)arg.fData, spec);
+							break;
+						case Pointer:
+							_Append1(*this, fmt_, nfmt_, *(void **)arg.fData, spec);
+							break;
+						default:
+							throw std::logic_error("unknow type!");
+							break;
+						}
 					}
 				}
 			} else { // if(fmt = strchr(fmt, '%'))
-			    fmt = fmt + strlen(fmt);
+				fmt = fmt + strlen(fmt);
 				break;
 			}
 		}
