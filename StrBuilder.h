@@ -11,7 +11,6 @@
 #include <stddef.h>
 #include <type_traits>
 #include <iterator>
-#include <array>
 
 namespace strbuilder {
 
@@ -137,16 +136,14 @@ namespace strbuilder {
 	struct CustomTrait
 	{
 		static const bool value = false;
-		static void ToStr(StrAppender &sa, ArgFmt &fmt, void const *data) {
-			throw std::logic_error("you should implements the StringTrait::ToStr for string");
-		}
+		static void ToStr(StrAppender &sa, ArgFmt &fmt, long long) {}
 	};
 
 	template< >
 	struct CustomTrait<std::string>
 	{
 		static const bool value = true;
-		static void ToStr(StrAppender &sa, ArgFmt &fmt, void const *data);
+		static void ToStr(StrAppender &sa, ArgFmt &fmt, long long);
 	};
 
 #ifdef ROOT_TString
@@ -154,15 +151,15 @@ namespace strbuilder {
 	struct CustomTrait<TString>
 	{
 		static const bool value = true;
-		static void ToStr(DataBuffer &sb, ArgFmt &fmt, void const *data);
+		static void ToStr(DataBuffer &sb, ArgFmt &fmt, long long);
 	};
 #endif
 
 	struct FmtArg
 	{
 		FmtArgType fType;
-		void const *fData;
-		void(*fToStr)(StrAppender &b, ArgFmt &fmt, void const *data);
+		long long fData;
+		void(*fToStr)(StrAppender &b, ArgFmt &fmt, long long);
 
 		bool isChar() const;
 		bool isIntegral() const;
@@ -189,7 +186,7 @@ namespace strbuilder {
 		static FmtArgType GetFmtArgType(long double) { return LongDouble; }
 		static FmtArgType GetFmtArgType(double) { return Double; }
 		static FmtArgType GetFmtArgType(float) { return Float; }
-		static FmtArgType GetFmtArgType(void *) { return Pointer; }
+		static FmtArgType GetFmtArgType(void const *) { return Pointer; }
 		
 		template<class T>
 		static typename std::enable_if<CustomTrait<T>::value,
@@ -274,10 +271,20 @@ namespace strbuilder {
 		template<class... Args>
 		StrBuilder &Fmt(char const * const fmt, Args const &... args)
 		{
-			std::array<FmtArg, sizeof...(args)> fmtArgs;
+			FmtArg fmtArgs[sizeof...(args)];
 			// we use decay_t<Args>(args) here to convert args of array a[n] to pointer
 			// so that &arg will obtain the address of the the  address to array
 			_FillFmt(fmt, fmtArgs, args...);
+			return *this;
+		}
+
+		template<class... Args>
+		StrBuilder &Fmt(char const * const fmt)
+		{
+			FmtArg fmtArgs[1];
+			// we use decay_t<Args>(args) here to convert args of array a[n] to pointer
+			// so that &arg will obtain the address of the the  address to array
+			VFmt(fmt, fmtArgs, 0);
 			return *this;
 		}
 
@@ -298,32 +305,187 @@ namespace strbuilder {
 		void _AppendN(char c, size_t len);
 
 		template<size_t N, class Arg0, class... Args>
-		void _FillFmt(char const * const fmt, std::array<FmtArg, N> &fmtArgs, Arg0 const &arg0, Args const &... args)
+		typename std::enable_if<CustomTrait<Arg0>::value
+		>::type _FillFmt(char const * const fmt, FmtArg (&fmtArgs)[N], Arg0 const &arg0, Args const &... args)
 		{
 			FmtArg fmtArg0;
-			fmtArg0.fData = &arg0;
+			fmtArg0.fData = (long long)(void*)&arg0;
 			fmtArg0.fToStr = CustomTrait<Arg0>::ToStr;
 			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
 			fmtArgs[N - sizeof...(args)-1] = fmtArg0;
 			_FillFmt(fmt, fmtArgs, args...);
 		}
 
-		template<size_t N, size_t N1, class... Args>
-		void _FillFmt(char const * const fmt, std::array<FmtArg, N> &fmtArgs, char const (&arg0)[N1], Args const &... args)
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], double arg0, Args const &... args)
+		{
+			typedef double Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = *(long long*)&arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], float arg0, Args const &... args)
+		{
+			_FillFmt(fmt, fmtArgs, (double)arg0, args);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned long long arg0, Args const &... args)
+		{
+			typedef unsigned long long Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], long long arg0, Args const &... args)
+		{
+			typedef long long Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned long arg0, Args const &... args)
+		{
+			typedef unsigned long Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], long arg0, Args const &... args)
+		{
+			typedef long Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned int arg0, Args const &... args)
+		{
+			typedef unsigned int Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg (&fmtArgs)[N], int arg0, Args const &... args)
+		{
+			typedef int Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned short arg0, Args const &... args)
+		{
+			typedef unsigned short Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], short arg0, Args const &... args)
+		{
+			typedef short Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned char arg0, Args const &... args)
+		{
+			typedef unsigned char Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], signed char arg0, Args const &... args)
+		{
+			typedef signed char Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], char arg0, Args const &... args)
+		{
+			typedef char Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], char16_t arg0, Args const &... args)
+		{
+			typedef char32_t Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], char32_t arg0, Args const &... args)
+		{
+			typedef char32_t Arg0;
+			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
+			fmtArg0.fData = arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], char const *arg0, Args const &... args)
 		{
 			FmtArg fmtArg0;
-			char const *arg0_ = arg0;
-			fmtArg0.fData = &arg0_;
-			fmtArg0.fToStr = CustomTrait<char const*>::ToStr;
+			fmtArg0.fData = (long long)arg0;
+			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
+			fmtArgs[N - sizeof...(args)-1] = fmtArg0;
+			_FillFmt(fmt, fmtArgs, args...);
+		}
+
+		template<size_t N, class... Args>
+		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], void const *arg0, Args const &... args)
+		{
+			FmtArg fmtArg0;
+			fmtArg0.fData = (long long)arg0;
 			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
 			fmtArgs[N - sizeof...(args)-1] = fmtArg0;
 			_FillFmt(fmt, fmtArgs, args...);
 		}
 
 		template<size_t N>
-		void _FillFmt(char const * const fmt, std::array<FmtArg, N> &fmtArgs)
+		void _FillFmt(char const * const fmt, FmtArg (&fmtArgs)[N])
 		{
-			VFmt(fmt, fmtArgs.data(), fmtArgs.size());
+			VFmt(fmt, fmtArgs, N);
 		}
 
 		char *fBuf;

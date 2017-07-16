@@ -1,6 +1,8 @@
 
 #include "StrBuilder.h"
 #include "StrBuilderForTime.h"
+//#define FMT_HEADER_ONLY 1
+//#include <D:/projects/fmt/fmt/format.h>
 #include <chrono>
 using namespace strbuilder;
 
@@ -11,9 +13,12 @@ int main() {
 	char b[1024];
 	StrBuilder sb;
 
-	sb.Fmt("%3d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-	sprintf(b, "%3d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-	ASSERT(sb.Data(), b);
+	//fmt::format("%3d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+	sb.Fmt("%d %d %d %d %d %d %d %d %d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+	sb.Clear();
+
+	sb.Fmt("%f %f %f %f %f %f %f %f %f", 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.);
 	sb.Clear();
 
  	sb.Fmt("%3d", 1);

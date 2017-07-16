@@ -236,7 +236,7 @@ namespace strbuilder {
 		return fType == C_Str;
 	}
 
-	void CustomTrait<std::string>::ToStr(StrAppender &sa, ArgFmt &fmt, void const *data)
+	void CustomTrait<std::string>::ToStr(StrAppender &sa, ArgFmt &fmt, long long data)
 	{
 		auto &str =  *(std::string*)data;
 		if (fmt.width > str.size()) {
@@ -263,73 +263,74 @@ namespace strbuilder {
 	}
 #endif
 
-	void covert_to_double(double &a_double, FmtArg &arg)
+	void covert_to_double(FmtArg &arg)
 	{
+		double d;
 		switch (arg.fType)
 		{
 		case Char:
-			a_double = *(char*)arg.fData;
-			arg.fData = &a_double;
+			d = *(char*)&arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case Char16:
-			a_double = *(char16_t*)arg.fData;
-			arg.fData = &a_double;
+			d = *(char16_t*)arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case Char32:
-			a_double = *(char32_t*)arg.fData;
-			arg.fData = &a_double;
+			d = *(char32_t*)arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case SignedChar:
-			a_double = *(signed char*)arg.fData;
-			arg.fData = &a_double;
+			d = *(signed char*)arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case Short:
-			a_double = *(short*)arg.fData;
-			arg.fData = &a_double;
+			d = *(short*)arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case Int:
-			a_double = *(int*)arg.fData;
-			arg.fData = &a_double;
+			d = *(int*)arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case Long:
-			a_double = *(long*)arg.fData;
-			arg.fData = &a_double;
+			d = *(long*)arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case LongLong:
-			a_double = (double)*(long long*)arg.fData;
-			arg.fData = &a_double;
+			d = (double)*(long long*)&arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case UnsignedChar:
-			a_double = *(unsigned char*)arg.fData;
-			arg.fData = &a_double;
+			d = *(unsigned char*)&arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case UnsignedShort:
-			a_double = *(unsigned short*)arg.fData;
-			arg.fData = &a_double;
+			d = *(unsigned short*)&arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case UnsignedInt:
-			a_double = *(unsigned int*)arg.fData;
-			arg.fData = &a_double;
+			d = *(unsigned int*)&arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case UnsignedLong:
-			a_double = *(unsigned long*)arg.fData;
-			arg.fData = &a_double;
+			d = *(unsigned long*)&arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case UnsignedLongLong:
-			a_double = (double)*(unsigned long long*)arg.fData;
-			arg.fData = &a_double;
+			d = (double)*(unsigned long long*)&arg.fData;
+			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
 		case Double:
@@ -432,7 +433,6 @@ namespace strbuilder {
 						StrAppender sa(*this);
 						arg.fToStr(sa, argFmt, arg.fData);
 					} else {
-						double a_double;
 						switch (spec)
 						{
 						case 'd': // signed or unsigned integers
@@ -478,7 +478,7 @@ namespace strbuilder {
 						case 'a': // float or double
 						case 'A': // float or double
 						{
-							covert_to_double( a_double, arg);
+							covert_to_double(arg);
 							break;
 						}
 						case 'c': // char
@@ -514,57 +514,57 @@ namespace strbuilder {
 						switch (arg.fType)
 						{
 						case Char:
-							_Append1(*this, fmt_, nfmt_, *(char*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (char)arg.fData, spec);
 							break;
 						case Char16:
-							_Append1(*this, fmt_, nfmt_, *(char16_t*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (char16_t)arg.fData, spec);
 							break;
 						case Char32:
-							_Append1(*this, fmt_, nfmt_, *(char32_t*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (char32_t)arg.fData, spec);
 							break;
 						case SignedChar:
-							_Append1(*this, fmt_, nfmt_, *(signed char*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (signed char)arg.fData, spec);
 							break;
 						case Short:
-							_Append1(*this, fmt_, nfmt_, *(short*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (short)arg.fData, spec);
 							break;
 						case Int:
-							_Append1(*this, fmt_, nfmt_, *(int*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (int)arg.fData, spec);
 							break;
 						case Long:
-							_Append1(*this, fmt_, nfmt_, *(long*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (long)arg.fData, spec);
 							break;
 						case LongLong:
-							_Append1(*this, fmt_, nfmt_, *(long long*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (long long)arg.fData, spec);
 							break;
 						case UnsignedChar:
-							_Append1(*this, fmt_, nfmt_, *(unsigned char*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (unsigned char)arg.fData, spec);
 							break;
 						case UnsignedShort:
-							_Append1(*this, fmt_, nfmt_, *(unsigned short*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (unsigned short)arg.fData, spec);
 							break;
 						case UnsignedInt:
-							_Append1(*this, fmt_, nfmt_, *(unsigned int*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (unsigned int)arg.fData, spec);
 							break;
 						case UnsignedLong:
-							_Append1(*this, fmt_, nfmt_, *(unsigned long*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (unsigned long)arg.fData, spec);
 							break;
 						case UnsignedLongLong:
-							_Append1(*this, fmt_, nfmt_, *(unsigned long long*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (unsigned long long)arg.fData, spec);
 							break;
 						case Double:
-							_Append1(*this, fmt_, nfmt_, *(double*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, *(double*)&arg.fData, spec);
 							break;
 						case LongDouble:
 							_Append1(*this, fmt_, nfmt_, *(long double*)arg.fData, spec);
 							break;
 						case Float:
-							_Append1(*this, fmt_, nfmt_, *(float*)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, *(float*)&arg.fData, spec);
 						case C_Str:
-							_Append1(*this, fmt_, nfmt_, *(char const**)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (char const*)arg.fData, spec);
 							break;
 						case Pointer:
-							_Append1(*this, fmt_, nfmt_, *(void **)arg.fData, spec);
+							_Append1(*this, fmt_, nfmt_, (void *)arg.fData, spec);
 							break;
 						default:
 							throw std::logic_error("unknow type!");
