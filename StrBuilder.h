@@ -1,107 +1,62 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <stdlib.h>
-#include <memory.h>
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
 #include <string>
-#include <type_traits>
-#include <stddef.h>
 #include <iterator>
 
 namespace strbuilder {
 
 	enum ArgType
 	{
-		SIGNED_BIT = 64,
-		UNSIGNED_BIT = 128,
-		_CHAR_BIT = 256,
+		_SIGNED_FLAG = 64,
+		_UNSIGNED_FLAG = 128,
+		_CHAR_FLAG = 256,
 
-		Char_ = 0,
-		Char16_,
-		Char32_,
+		_Char = 0,
+		_Char16,
+		_Char32,
 
-		SignedChar_,
-		Short_,
-		Int_,
-		Long_,
-		LongLong_,
+		_SignedChar,
+		_Short,
+		_Int,
+		_Long,
+		_LongLong,
 
-		UnsignedChar_,
-		UnsignedShort_,
-		UnsignedInt_,
-		UnsignedLong_,
-		UnsignedLongLong_,
+		_UnsignedChar,
+		_UnsignedShort,
+		_UnsignedInt,
+		_UnsignedLong,
+		_UnsignedLongLong,
 
 #if CHAR_MAX == 127
-		Char = Char_ | SIGNED_BIT | _CHAR_BIT,
+		Char = _Char | _SIGNED_FLAG | _CHAR_FLAG,
 #else
-		Char = Char_ | UNSIGNED_BIT,
+		Char = _Char | _UNSIGNED_FLAG | _CHAR_FLAG,
 #endif
 
-		Char16 = Char16_ | UNSIGNED_BIT | _CHAR_BIT,
-		Char32 = Char32_ | UNSIGNED_BIT | _CHAR_BIT,
+		Char16 = _Char16 | _UNSIGNED_FLAG | _CHAR_FLAG,
+		Char32 = _Char32 | _UNSIGNED_FLAG | _CHAR_FLAG,
 
-		SignedChar = SignedChar_ | SIGNED_BIT | _CHAR_BIT,
-		Short = Short_ | SIGNED_BIT,
-		Int = Int_ | SIGNED_BIT,
-		Long = Long_ | SIGNED_BIT,
-		LongLong = LongLong_ | SIGNED_BIT,
+		SignedChar = _SignedChar | _SIGNED_FLAG | _CHAR_FLAG,
+		Short = _Short | _SIGNED_FLAG,
+		Int = _Int | _SIGNED_FLAG,
+		Long = _Long | _SIGNED_FLAG,
+		LongLong = _LongLong | _SIGNED_FLAG,
 
-		UnsignedChar = UnsignedChar_ | UNSIGNED_BIT | _CHAR_BIT,
-		UnsignedShort = UnsignedShort_ | UNSIGNED_BIT,
-		UnsignedInt = UnsignedInt_ | UNSIGNED_BIT,
-		UnsignedLong = UnsignedLong_ | UNSIGNED_BIT,
-		UnsignedLongLong = UnsignedLongLong_ | UNSIGNED_BIT,
+		UnsignedChar = _UnsignedChar | _UNSIGNED_FLAG | _CHAR_FLAG,
+		UnsignedShort = _UnsignedShort | _UNSIGNED_FLAG,
+		UnsignedInt = _UnsignedInt | _UNSIGNED_FLAG,
+		UnsignedLong = _UnsignedLong | _UNSIGNED_FLAG,
+		UnsignedLongLong = _UnsignedLongLong | _UNSIGNED_FLAG,
 
 
-		Float = UnsignedLongLong_ + 1,
+		Float = _UnsignedLongLong + 1,
 		Double,
 		LongDouble,
 		Pointer,
 		C_Str, // pointer to char
 		Custom,
 
-	};
-
-	struct DataBuffer {
-
-		DataBuffer() {
-			fLen = 31;
-			fBuf = fStaticBuf;
-		}
-		void Reinit(size_t n) {
-			if (fBuf != fStaticBuf) {
-				delete fBuf;
-			}
-			if (n <= 31) {
-				fLen = n;
-				fBuf = fStaticBuf;
-			}
-			else {
-				fLen = n;
-				fBuf = new char[fLen + 1];
-			}
-		}
-		void Double() {
-			if (fBuf != fStaticBuf) {
-				delete fBuf;
-			}
-			fLen *= 2;
-			fBuf = new char[fLen + 1];
-		}
-
-		~DataBuffer() {
-			if (fBuf != fStaticBuf) {
-				delete fBuf;
-			}
-		}
-		size_t fLen;
-		char *fBuf;
-	private:
-		char fStaticBuf[32];
 	};
 
 	struct ArgFmt
@@ -111,23 +66,7 @@ namespace strbuilder {
 		char flags;
 		char specfier;
 
-		char const *Str() {
-			char *b = buf;
-			*b++ = '%';
-			if (flags) {
-				*b++ = flags;
-			}
-			if (width < SIZE_MAX / 2) {
-				b += sprintf(b, "%zd", width);
-			}
-			if (precision < SIZE_MAX / 2) {
-				*b++ = '.';
-				b += sprintf(b, "%zd", precision);
-			}
-			*b++ = specfier;
-			*b++ = '\0';
-			return buf;
-		}
+		char const *Str();
 		char buf[100];
 	};
 
@@ -135,25 +74,10 @@ namespace strbuilder {
 	template<class T>
 	struct CustomTrait
 	{
-		static const bool value = false;
-		static void ToStr(StrAppender &sa, ArgFmt &fmt, long long) {}
+		//static const bool value = false;
+		//static void ToStr(StrAppender &sa, ArgFmt &fmt, long long);
 	};
 
-	template< >
-	struct CustomTrait<std::string>
-	{
-		static const bool value = true;
-		static void ToStr(StrAppender &sa, ArgFmt &fmt, long long);
-	};
-
-#ifdef ROOT_TString
-	template< >
-	struct CustomTrait<TString>
-	{
-		static const bool value = true;
-		static void ToStr(DataBuffer &sb, ArgFmt &fmt, long long);
-	};
-#endif
 
 	struct ArgInfo
 	{
@@ -187,10 +111,6 @@ namespace strbuilder {
 		static ArgType GetFmtArgType(double) { return Double; }
 		static ArgType GetFmtArgType(float) { return Float; }
 		static ArgType GetFmtArgType(void const *) { return Pointer; }
-
-		template<class T>
-		static typename std::enable_if<CustomTrait<T>::value,
-			ArgType>::type GetFmtArgType(T const &) { return Custom; }
 	};
 
 	class StrBuilder
@@ -392,7 +312,7 @@ namespace strbuilder {
 
 #ifdef SB_VARARG
 
-	//private:
+		//private:
 
 		void SetFmt(ArgInfo &fmt) {
 		}
@@ -492,18 +412,25 @@ namespace strbuilder {
 
 		void Append(char const *str, size_t len) { _Append(str, len); }
 		void AppendN(char c, size_t len) { _AppendN(c, len); }
-	//private:
+	
+
+
+
+
+private:
 		// for internal use, currently it's same as public version Append
 		void _Append(char const *str, size_t len);
 		void _AppendN(char c, size_t len);
 
 		template<class Arg>
-		typename std::enable_if<CustomTrait<Arg>::value
-		>::type SetFmt1(ArgInfo &fmtArg, Arg const &arg0)
+		void SetFmt1(ArgInfo &fmtArg, Arg const &arg0)
 		{
 			fmtArg.fData = (long long)(void*)&arg0;
+			// if some error happened here, it means you use a unsupported type
+			// you need to implement CustomTrait to support the `Arg` type.
+			// just see CustomTrait<std::string>
 			fmtArg.fToStr = CustomTrait<Arg>::ToStr;
-			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
+			fmtArg.fType = ArgType::Custom;
 		}
 
 		void SetFmt1(ArgInfo &fmtArg, double arg0)
@@ -602,22 +529,125 @@ namespace strbuilder {
 			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		void SetFmt1(ArgInfo &fmtArg, void const *arg0)
+		void SetFmt1(ArgInfo &fmtArg, char *arg0)
+		{
+			SetFmt1(fmtArg, static_cast<char const *>(arg0));
+		}
+
+		template<class T>
+		void SetFmt1(ArgInfo &fmtArg, T *arg0)
+		{
+			SetFmt1(fmtArg, static_cast<T const *>(arg0));
+		}
+
+		template<class T>
+		void SetFmt1(ArgInfo &fmtArg, T const *arg0)
 		{
 			fmtArg.fData = (long long)arg0;
 			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
+	private:
 		char *fBuf;
 		size_t fLen;
 		size_t fCap;
 		char fStaticBuf[8];
 	};
 
-	template<class... Args>
-	std::string Fmt(char const *fmt, Args... args) {
+	template<class T1>
+	std::string Fmt(char const *fmt, T1 const &v1) {
 		StrBuilder sb;
-		sb.Fmt(fmt, args...);
+		sb.Fmt(fmt, v1);
+		return std::string(sb.Data(), sb.Length());
+	}
+
+	template<class T1, class T2>
+	std::string Fmt(char const *fmt, T1 const &v1, T2 const &v2) {
+		StrBuilder sb;
+		sb.Fmt(fmt, v1, v2);
+		return std::string(sb.Data(), sb.Length());
+	}
+
+	template<class T1, class T2, class T3>
+	std::string Fmt(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3) {
+		StrBuilder sb;
+		sb.Fmt(fmt, v1, v2, v3);
+		return std::string(sb.Data(), sb.Length());
+	}
+
+	template<class T1, class T2, class T3, class T4>
+	std::string Fmt(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4) {
+		StrBuilder sb;
+		sb.Fmt(fmt, v1, v2, v3, v4);
+		return std::string(sb.Data(), sb.Length());
+	}
+
+	template<class T1, class T2, class T3, class T4, class T5>
+	std::string Fmt(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4, T5 const &v5) {
+		StrBuilder sb;
+		sb.Fmt(fmt, v1, v2, v3, v4, v5);
+		return std::string(sb.Data(), sb.Length());
+	}
+
+	template<class T1, class T2, class T3, class T4, class T5, class T6>
+	std::string Fmt(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4,
+		T5 const &v5, T6 const &v6) {
+		StrBuilder sb;
+		sb.Fmt(fmt, v1, v2, v3, v4, v5, v6);
+		return std::string(sb.Data(), sb.Length());
+	}
+
+	void StdOut(char const *str);
+
+	template<class T1>
+	void PrintLn(char const *fmt, T1 const &v1) {
+		StrBuilder sb;
+		sb.FmtLn(fmt, v1);
+		StdOut(sb.Data());
+	}
+
+	template<class T1, class T2>
+	void PrintLn(char const *fmt, T1 const &v1, T2 const &v2) {
+		StrBuilder sb;
+		sb.FmtLn(fmt, v1, v2);
+		StdOut(sb.Data());
+	}
+
+	template<class T1, class T2, class T3>
+	void PrintLn(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3) {
+		StrBuilder sb;
+		sb.FmtLn(fmt, v1, v2, v3);
+		StdOut(sb.Data());
+	}
+
+	template<class T1, class T2, class T3, class T4>
+	void PrintLn(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4) {
+		StrBuilder sb;
+		sb.FmtLn(fmt, v1, v2, v3, v4);
+		StdOut(sb.Data());
+	}
+
+	template<class T1, class T2, class T3, class T4, class T5>
+	void PrintLn(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4, T5 const &v5) {
+		StrBuilder sb;
+		sb.FmtLn(fmt, v1, v2, v3, v4, v5);
+		StdOut(sb.Data());
+	}
+
+	template<class T1, class T2, class T3, class T4, class T5, class T6>
+	void PrintLn(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4,
+		T5 const &v5, T6 const &v6) {
+		StrBuilder sb;
+		sb.FmtLn(fmt, v1, v2, v3, v4, v5, v6);
+		StdOut(sb.Data());
+	}
+
+#ifdef SB_VARARG
+	template<class T1, class T2, class T3, class T4, class T5, class T6, class... Args>
+	std::string Fmt(char const *fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4,
+		T5 const &v5, T6 const &v6, Args const &... args) {
+		StrBuilder sb;
+		sb.Fmt(fmt, v1, v2, v3, v4, v5, v6, args);
 		return std::string(sb.Data(), sb.Length());
 	}
 
@@ -642,6 +672,8 @@ namespace strbuilder {
 		printf("%s\n", sb.Data());
 	}
 
+#endif
+
 
 	class StrAppender
 	{
@@ -656,11 +688,33 @@ namespace strbuilder {
 			sb.AppendN(c, len);
 			return *this;
 		}
+
+#ifdef SB_VARARG
 		template<class... Args>
 		StrAppender &Fmt(char const * const fmt, Args const &... args)
 		{
 			sb.Fmt(fmt, args...);
 			return *this;
+		}
+#endif
+	};
+
+
+	template< >
+	struct CustomTrait<std::string>
+	{
+		//static const bool value = true;
+
+		static void ToStr(StrAppender &sa, ArgFmt &fmt, long long data) {
+			auto &str = *(std::string*)data;
+			if (fmt.width > str.size()) {
+				size_t off = fmt.width - str.size();
+				sa.AppendN(' ', off);
+				sa.Append(str.data(), str.size());
+			}
+			else {
+				sa.Append(str.data(), str.size());
+			}
 		}
 	};
 

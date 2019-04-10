@@ -10,13 +10,6 @@ int main() {
 	char b[1024];
 	StrBuilder sb;
 
-	ArgInfo argFmt[5];
-	sb.SetFmt1(argFmt[0], 0);
-#ifdef SB_VARARG
-	sb.SetFmt(argFmt[0], 0, 0);
-	sb.SetFmt(argFmt[0], 0, 0, 0);
-#endif
-
 	sb.Fmt("%d %d %d %d %d", 1, 2, 3, 4, 5);
 	sb.Fmt("%d %d %d %d %d %d", 1, 2, 3, 4, 5, 6);
 
@@ -243,5 +236,3 @@ int main() {
 
 
 }
-
-#include "StrBuilder.impl.h"
