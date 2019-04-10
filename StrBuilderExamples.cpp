@@ -1,6 +1,6 @@
 
 #include "StrBuilder.h"
-#include "StrBuilderForTime.h"
+//#include "StrBuilderForTime.h"
 //#define FMT_HEADER_ONLY 1
 //#include <D:/projects/fmt/fmt/format.h>
 #include <chrono>
@@ -201,22 +201,22 @@ int main() {
 
 
 	{
-		using namespace std::chrono;
-		auto t = 5.0ms;
-		sb.Fmt("%9.2m", t);
-		sprintf(b, "%7.2fms", 5.0);
-		ASSERT(sb.Data(), b);
-		sb.Clear();
+		//using namespace std::chrono;
+		//auto t = 5.0ms;
+		//sb.Fmt("%9.2m", t);
+		//sprintf(b, "%7.2fms", 5.0);
+		//ASSERT(sb.Data(), b);
+		//sb.Clear();
 
 	}
 
 	{
-		using namespace std::chrono;
-		auto t = 5.0ms;
-		sb.Fmt("%1.2m", t);
-		sprintf(b, "%1.2fms", 5.0);
-		ASSERT(sb.Data(), b);
-		sb.Clear();
+		//using namespace std::chrono;
+		//auto t = 5.0ms;
+		//sb.Fmt("%1.2m", t);
+		//sprintf(b, "%1.2fms", 5.0);
+		//ASSERT(sb.Data(), b);
+		//sb.Clear();
 
 	}
 
@@ -231,7 +231,7 @@ int main() {
 		}
 		auto t1 = std::chrono::high_resolution_clock::now();
 		auto t3 = t1 - t0;
-		PrintLn("benchmark %20u", t1 - t0);
+		PrintLn("benchmark %20d", (t1 - t0).count());
 	}
 
 

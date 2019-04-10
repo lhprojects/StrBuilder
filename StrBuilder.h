@@ -218,6 +218,8 @@ namespace strbuilder {
 		char const *Data() const;
 		size_t Length() const;
 		void Clear();
+
+		// apppend nothing, and return this
 		StrBuilder &App();
 
 		template<class... Args>
