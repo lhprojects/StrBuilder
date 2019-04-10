@@ -1,8 +1,5 @@
-
+//#define SB_VARARG
 #include "StrBuilder.h"
-//#include "StrBuilderForTime.h"
-//#define FMT_HEADER_ONLY 1
-//#include <D:/projects/fmt/fmt/format.h>
 #include <chrono>
 using namespace strbuilder;
 
@@ -13,13 +10,23 @@ int main() {
 	char b[1024];
 	StrBuilder sb;
 
-	//fmt::format("%3d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+	ArgInfo argFmt[5];
+	sb.SetFmt1(argFmt[0], 0);
+#ifdef SB_VARARG
+	sb.SetFmt(argFmt[0], 0, 0);
+	sb.SetFmt(argFmt[0], 0, 0, 0);
+#endif
 
+	sb.Fmt("%d %d %d %d %d", 1, 2, 3, 4, 5);
+	sb.Fmt("%d %d %d %d %d %d", 1, 2, 3, 4, 5, 6);
+
+#ifdef SB_VARARG
+	sb.Fmt("%d %d %d %d %d %d %d", 1, 2, 3, 4, 5, 6, 7);
 	sb.Fmt("%d %d %d %d %d %d %d %d %d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+	sb.Fmt("%f %f %f %f %f %f %f %f %f", 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.);
+#endif
 	sb.Clear();
 
-	sb.Fmt("%f %f %f %f %f %f %f %f %f", 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.);
-	sb.Clear();
 
  	sb.Fmt("%3d", 1);
 	sprintf(b, "%3d", 1);

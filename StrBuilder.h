@@ -7,14 +7,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <string>
-#include <exception>
-#include <stddef.h>
 #include <type_traits>
+#include <stddef.h>
 #include <iterator>
 
 namespace strbuilder {
 
-	enum FmtArgType
+	enum ArgType
 	{
 		SIGNED_BIT = 64,
 		UNSIGNED_BIT = 128,
@@ -80,12 +79,13 @@ namespace strbuilder {
 			if (n <= 31) {
 				fLen = n;
 				fBuf = fStaticBuf;
-			} else {
+			}
+			else {
 				fLen = n;
 				fBuf = new char[fLen + 1];
 			}
 		}
-		void Double() { 
+		void Double() {
 			if (fBuf != fStaticBuf) {
 				delete fBuf;
 			}
@@ -117,10 +117,10 @@ namespace strbuilder {
 			if (flags) {
 				*b++ = flags;
 			}
-			if (width < SIZE_MAX/2) {
+			if (width < SIZE_MAX / 2) {
 				b += sprintf(b, "%zd", width);
 			}
-			if (precision < SIZE_MAX/2) {
+			if (precision < SIZE_MAX / 2) {
 				*b++ = '.';
 				b += sprintf(b, "%zd", precision);
 			}
@@ -130,7 +130,7 @@ namespace strbuilder {
 		}
 		char buf[100];
 	};
-	
+
 	class StrAppender;
 	template<class T>
 	struct CustomTrait
@@ -155,9 +155,9 @@ namespace strbuilder {
 	};
 #endif
 
-	struct FmtArg
+	struct ArgInfo
 	{
-		FmtArgType fType;
+		ArgType fType;
 		long long fData;
 		void(*fToStr)(StrAppender &b, ArgFmt &fmt, long long);
 
@@ -169,28 +169,28 @@ namespace strbuilder {
 		bool isPointer() const;
 		bool isString() const;
 
-		static FmtArgType GetFmtArgType(char c) { return Char; }
-		static FmtArgType GetFmtArgType(char16_t c) { return Char16; }
-		static FmtArgType GetFmtArgType(char32_t c) { return Char32; }
-		static FmtArgType GetFmtArgType(signed char) { return SignedChar; }
-		static FmtArgType GetFmtArgType(unsigned char) { return UnsignedChar; }
-		static FmtArgType GetFmtArgType(short) { return Short; }
-		static FmtArgType GetFmtArgType(unsigned short) { return UnsignedShort; }
-		static FmtArgType GetFmtArgType(int) { return Int; }
-		static FmtArgType GetFmtArgType(unsigned) { return UnsignedInt; }
-		static FmtArgType GetFmtArgType(long) { return Long; }
-		static FmtArgType GetFmtArgType(unsigned long) { return UnsignedLong; }
-		static FmtArgType GetFmtArgType(long long) { return LongLong; }
-		static FmtArgType GetFmtArgType(unsigned long long) { return UnsignedLongLong; }
-		static FmtArgType GetFmtArgType(char const *) { return C_Str; }
-		static FmtArgType GetFmtArgType(long double) { return LongDouble; }
-		static FmtArgType GetFmtArgType(double) { return Double; }
-		static FmtArgType GetFmtArgType(float) { return Float; }
-		static FmtArgType GetFmtArgType(void const *) { return Pointer; }
-		
+		static ArgType GetFmtArgType(char c) { return Char; }
+		static ArgType GetFmtArgType(char16_t c) { return Char16; }
+		static ArgType GetFmtArgType(char32_t c) { return Char32; }
+		static ArgType GetFmtArgType(signed char) { return SignedChar; }
+		static ArgType GetFmtArgType(unsigned char) { return UnsignedChar; }
+		static ArgType GetFmtArgType(short) { return Short; }
+		static ArgType GetFmtArgType(unsigned short) { return UnsignedShort; }
+		static ArgType GetFmtArgType(int) { return Int; }
+		static ArgType GetFmtArgType(unsigned) { return UnsignedInt; }
+		static ArgType GetFmtArgType(long) { return Long; }
+		static ArgType GetFmtArgType(unsigned long) { return UnsignedLong; }
+		static ArgType GetFmtArgType(long long) { return LongLong; }
+		static ArgType GetFmtArgType(unsigned long long) { return UnsignedLongLong; }
+		static ArgType GetFmtArgType(char const *) { return C_Str; }
+		static ArgType GetFmtArgType(long double) { return LongDouble; }
+		static ArgType GetFmtArgType(double) { return Double; }
+		static ArgType GetFmtArgType(float) { return Float; }
+		static ArgType GetFmtArgType(void const *) { return Pointer; }
+
 		template<class T>
 		static typename std::enable_if<CustomTrait<T>::value,
-			FmtArgType>::type GetFmtArgType(T const &) { return Custom; }
+			ArgType>::type GetFmtArgType(T const &) { return Custom; }
 	};
 
 	class StrBuilder
@@ -222,272 +222,390 @@ namespace strbuilder {
 		// apppend nothing, and return this
 		StrBuilder &App();
 
-		template<class... Args>
-		StrBuilder &App(char const *str, Args const &... args) {
+
+		StrBuilder &App(char const *str) {
 			_Append(str, strlen(str));
-			App(args...);
 			return *this;
 		}
 
-		template<class... Args>
-		StrBuilder &App(std::string const &str, Args const &... args) {
+		StrBuilder &App(std::string const &str) {
 			_Append(str.data(), str.length());
-			App(args...);
 			return *this;
 		}
 
-		template<class... Args>
-		StrBuilder &App(StrBuilder const &str, Args const &... args) {
+		StrBuilder &App(StrBuilder const &str) {
 			_Append(str.Data(), str.Length());
-			App(args...);
 			return *this;
 		}
 
-		template<class... Args>
-		StrBuilder &App(int i, Args const &... args) {
+		StrBuilder &App(int i) {
 			char str[32];
 			sprintf(str, "%i", i);
 			_Append(str, strlen(str));
-			App(args...);
 			return *this;
 		}
 
-		template<class... Args>
-		StrBuilder &App(unsigned i, Args const &... args) {
+		StrBuilder &App(unsigned i) {
 			char str[32];
 			sprintf(str, "%u", i);
 			_Append(str, strlen(str));
-			App(args...);
 			return *this;
 		}
 
-		template<class... Args>
-		StrBuilder &App(char c, Args const &... args) {
+		StrBuilder &App(char c) {
 			char str[32];
 			sprintf(str, "%c", c);
 			_Append(str, strlen(str));
+			return *this;
+		}
+
+		template<class T1, class T2>
+		StrBuilder &App(T1 v1, T2 v2) {
+			App(v1);
+			App(v2);
+			return *this;
+		}
+		template<class T1, class T2, class T3>
+		StrBuilder &App(T1 v1, T2 v2, T3 v3) {
+			App(v1);
+			App(v2);
+			App(v3);
+			return *this;
+		}
+		template<class T1, class T2, class T3, class T4>
+		StrBuilder &App(T1 v1, T2 v2, T3 v3, T4 v4) {
+			App(v1);
+			App(v2);
+			App(v3);
+			App(v4);
+			return *this;
+		}
+		template<class T1, class T2, class T3, class T4, class T5>
+		StrBuilder &App(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5) {
+			App(v1);
+			App(v2);
+			App(v3);
+			App(v4);
+			App(v5);
+			return *this;
+		}
+		template<class T1, class T2, class T3, class T4, class T5, class T6>
+		StrBuilder &App(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5, T6 v6) {
+			App(v1);
+			App(v2);
+			App(v3);
+			App(v4);
+			App(v5);
+			App(v6);
+			return *this;
+		}
+
+#ifdef SB_VARARG
+		template<class T1, class T2, class T3, class T4, class T5, class... Args>
+		StrBuilder &App(T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4, T5 const &v5, Args const &... args) {
+			App(v1);
+			App(v2);
+			App(v3);
+			App(v4);
+			App(v5);
 			App(args...);
 			return *this;
 		}
+#endif
 
-		template<class... Args>
-		StrBuilder &Fmt(char const * const fmt, Args const &... args)
-		{
-			FmtArg fmtArgs[sizeof...(args)];
-			// we use decay_t<Args>(args) here to convert args of array a[n] to pointer
-			// so that &arg will obtain the address of the the  address to array
-			_FillFmt(fmt, fmtArgs, args...);
-			return *this;
-		}
-
-		template<class... Args>
 		StrBuilder &Fmt(char const * const fmt)
 		{
-			FmtArg fmtArgs[1];
-			// we use decay_t<Args>(args) here to convert args of array a[n] to pointer
-			// so that &arg will obtain the address of the the  address to array
+			ArgInfo fmtArgs[1];
 			VFmt(fmt, fmtArgs, 0);
 			return *this;
 		}
 
-		template<class... Args>
-		StrBuilder &FmtLn(char const * fmt, Args const&... args) {
-			Fmt(fmt, args...);
+		template<class T1>
+		StrBuilder &Fmt(char const * const fmt, T1 const &v1)
+		{
+			ArgInfo fmtArgs[1];
+			SetFmt1(fmtArgs[0], v1);
+			VFmt(fmt, fmtArgs, 1);
+			return *this;
+		}
+
+		template<class T1, class T2>
+		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2)
+		{
+			ArgInfo fmtArgs[2];
+			SetFmt1(fmtArgs[0], v1);
+			SetFmt1(fmtArgs[1], v2);
+			VFmt(fmt, fmtArgs, 2);
+			return *this;
+		}
+
+		template<class T1, class T2, class T3>
+		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3)
+		{
+			ArgInfo fmtArgs[3];
+			SetFmt1(fmtArgs[0], v1);
+			SetFmt1(fmtArgs[1], v2);
+			SetFmt1(fmtArgs[2], v3);
+			VFmt(fmt, fmtArgs, 3);
+			return *this;
+		}
+
+		template<class T1, class T2, class T3, class T4>
+		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4)
+		{
+			ArgInfo fmtArgs[4];
+			SetFmt1(fmtArgs[0], v1);
+			SetFmt1(fmtArgs[1], v2);
+			SetFmt1(fmtArgs[2], v3);
+			SetFmt1(fmtArgs[3], v4);
+			VFmt(fmt, fmtArgs, 4);
+			return *this;
+		}
+
+		template<class T1, class T2, class T3, class T4, class T5>
+		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4, T5 const &v5)
+		{
+			ArgInfo fmtArgs[5];
+			SetFmt1(fmtArgs[0], v1);
+			SetFmt1(fmtArgs[1], v2);
+			SetFmt1(fmtArgs[2], v3);
+			SetFmt1(fmtArgs[3], v4);
+			SetFmt1(fmtArgs[4], v5);
+			VFmt(fmt, fmtArgs, 5);
+			return *this;
+		}
+
+		template<class T1, class T2, class T3, class T4, class T5, class T6>
+		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2,
+			T3 const &v3, T4 const &v4, T5 const &v5, T6 const &v6)
+		{
+			ArgInfo fmtArgs[6];
+			SetFmt1(fmtArgs[0], v1);
+			SetFmt1(fmtArgs[1], v2);
+			SetFmt1(fmtArgs[2], v3);
+			SetFmt1(fmtArgs[3], v4);
+			SetFmt1(fmtArgs[4], v5);
+			SetFmt1(fmtArgs[5], v6);
+			VFmt(fmt, fmtArgs, 6);
+			return *this;
+		}
+
+#ifdef SB_VARARG
+
+	//private:
+
+		void SetFmt(ArgInfo &fmt) {
+		}
+
+		template<class T1, class... Args>
+		void SetFmt(ArgInfo &fmt, T1 const &t1, Args const &... args) {
+			SetFmt1(fmt, t1);
+			SetFmt((&fmt)[1], args...);
+		}
+	public:
+
+		template<class T1, class T2, class T3, class T4, class T5, class T6, class... Args>
+		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2,
+			T3 const &v3, T4 const &v4, T5 const &v5, T6 const &v6, Args const &... args)
+		{
+			ArgInfo fmtArgs[6 + sizeof...(args)];
+			SetFmt1(fmtArgs[0], v1);
+			SetFmt1(fmtArgs[1], v2);
+			SetFmt1(fmtArgs[2], v3);
+			SetFmt1(fmtArgs[3], v4);
+			SetFmt1(fmtArgs[4], v5);
+			SetFmt1(fmtArgs[5], v6);
+			SetFmt(fmtArgs[6], args...);
+			VFmt(fmt, fmtArgs, 6 + sizeof...(args));
+			return *this;
+		}
+#endif
+
+		StrBuilder &FmtLn(char const * const fmt)
+		{
+			Fmt(fmt);
 			_Append("\n", 1);
 			return *this;
 		}
 
-		void VFmt(char const *fmt, FmtArg const args[], size_t nargs);
+		template<class T1>
+		StrBuilder &FmtLn(char const * const fmt, T1 const &v1)
+		{
+			Fmt(fmt, v1);
+			_Append("\n", 1);
+			return *this;
+		}
+
+		template<class T1, class T2>
+		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2)
+		{
+			Fmt(fmt, v1, v2);
+			_Append("\n", 1);
+			return *this;
+		}
+
+		template<class T1, class T2, class T3>
+		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3)
+		{
+			Fmt(fmt, v1, v2, v3);
+			_Append("\n", 1);
+			return *this;
+		}
+
+		template<class T1, class T2, class T3, class T4>
+		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4)
+		{
+			Fmt(fmt, v1, v2, v3, v4);
+			_Append("\n", 1);
+			return *this;
+		}
+
+		template<class T1, class T2, class T3, class T4, class T5>
+		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4, T5 const &v5)
+		{
+			Fmt(fmt, v1, v2, v3, v4, v5);
+			_Append("\n", 1);
+			return *this;
+		}
+
+		template<class T1, class T2, class T3, class T4, class T5, class T6>
+		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2,
+			T3 const &v3, T4 const &v4, T5 const &v5, T6 const &v6)
+		{
+			Fmt(fmt, v1, v2, v3, v4, v5, v6);
+			_Append("\n", 1);
+			return *this;
+		}
+
+
+#ifdef SB_VARARG
+		template<class T1, class T2, class T3, class T4, class T5, class T6, class... Args>
+		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2,
+			T3 const &v3, T4 const &v4, T5 const &v5, T6 const &v6, Args const &... args)
+		{
+			Fmt(fmt, v1, v2, v3, v4, v5, v6, args);
+			return *this;
+		}
+#endif
+
+		void VFmt(char const *fmt, ArgInfo const args[], size_t nargs);
 
 		void Append(char const *str, size_t len) { _Append(str, len); }
 		void AppendN(char c, size_t len) { _AppendN(c, len); }
-	private:
+	//private:
 		// for internal use, currently it's same as public version Append
 		void _Append(char const *str, size_t len);
 		void _AppendN(char c, size_t len);
 
-		template<size_t N, class Arg0, class... Args>
-		typename std::enable_if<CustomTrait<Arg0>::value
-		>::type _FillFmt(char const * const fmt, FmtArg (&fmtArgs)[N], Arg0 const &arg0, Args const &... args)
+		template<class Arg>
+		typename std::enable_if<CustomTrait<Arg>::value
+		>::type SetFmt1(ArgInfo &fmtArg, Arg const &arg0)
 		{
-			FmtArg fmtArg0;
-			fmtArg0.fData = (long long)(void*)&arg0;
-			fmtArg0.fToStr = CustomTrait<Arg0>::ToStr;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			fmtArgs[N - sizeof...(args)-1] = fmtArg0;
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = (long long)(void*)&arg0;
+			fmtArg.fToStr = CustomTrait<Arg>::ToStr;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], double arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, double arg0)
 		{
-			typedef double Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = *(long long*)&arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = *(long long*)&arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], float arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, float arg0)
 		{
-			_FillFmt(fmt, fmtArgs, (double)arg0, args);
+			SetFmt1(fmtArg, (double)arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned long long arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, unsigned long long arg0)
 		{
-			typedef unsigned long long Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], long long arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, long long arg0)
 		{
-			typedef long long Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned long arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, unsigned long arg0)
 		{
-			typedef unsigned long Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], long arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, long arg0)
 		{
-			typedef long Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned int arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, unsigned int arg0)
 		{
-			typedef unsigned int Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg (&fmtArgs)[N], int arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, int arg0)
 		{
-			typedef int Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned short arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, unsigned short arg0)
 		{
-			typedef unsigned short Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], short arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, short arg0)
 		{
-			typedef short Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], unsigned char arg0, Args const &... args)
+
+		void SetFmt1(ArgInfo &fmtArg, unsigned char arg0)
 		{
-			typedef unsigned char Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], signed char arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, char arg0)
 		{
-			typedef signed char Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], char arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, signed char arg0)
 		{
-			typedef char Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], char16_t arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, char16_t arg0)
 		{
-			typedef char32_t Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], char32_t arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, char32_t arg0)
 		{
-			typedef char32_t Arg0;
-			FmtArg &fmtArg0 = fmtArgs[N - sizeof...(args)-1];
-			fmtArg0.fData = arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], char const *arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, char const *arg0)
 		{
-			FmtArg fmtArg0;
-			fmtArg0.fData = (long long)arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			fmtArgs[N - sizeof...(args)-1] = fmtArg0;
-			_FillFmt(fmt, fmtArgs, args...);
+			fmtArg.fData = (long long)arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
-		template<size_t N, class... Args>
-		void _FillFmt(char const * const fmt, FmtArg(&fmtArgs)[N], void const *arg0, Args const &... args)
+		void SetFmt1(ArgInfo &fmtArg, void const *arg0)
 		{
-			FmtArg fmtArg0;
-			fmtArg0.fData = (long long)arg0;
-			fmtArg0.fType = FmtArg::GetFmtArgType(arg0);
-			fmtArgs[N - sizeof...(args)-1] = fmtArg0;
-			_FillFmt(fmt, fmtArgs, args...);
-		}
-
-		template<size_t N>
-		void _FillFmt(char const * const fmt, FmtArg (&fmtArgs)[N])
-		{
-			VFmt(fmt, fmtArgs, N);
+			fmtArg.fData = (long long)arg0;
+			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
 		char *fBuf;

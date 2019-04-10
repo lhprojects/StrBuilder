@@ -204,35 +204,35 @@ namespace strbuilder {
 		}
 	}
 
-	bool FmtArg::isChar() const {
+	bool ArgInfo::isChar() const {
 		return (fType & _CHAR_BIT) != 0;
 	}
 
-	bool FmtArg::isIntegral() const
+	bool ArgInfo::isIntegral() const
 	{
 		return (fType & (UNSIGNED_BIT | SIGNED_BIT)) != 0;
 	}
 
-	bool FmtArg::isSigned() const
+	bool ArgInfo::isSigned() const
 	{
 		return (fType & SIGNED_BIT) != 0;
 	}
 
-	bool FmtArg::isUnsigned() const
+	bool ArgInfo::isUnsigned() const
 	{
 		return (fType & UNSIGNED_BIT) != 0;
 	}
 
-	bool FmtArg::isFloating() const
+	bool ArgInfo::isFloating() const
 	{
 		return fType == Float || fType == Double || fType == LongDouble;
 	}
 
-	bool FmtArg::isPointer() const {
+	bool ArgInfo::isPointer() const {
 		return fType == Pointer || fType == C_Str;
 	}
 
-	bool FmtArg::isString() const {
+	bool ArgInfo::isString() const {
 		return fType == C_Str;
 	}
 
@@ -263,7 +263,7 @@ namespace strbuilder {
 	}
 #endif
 
-	void covert_to_double(FmtArg &arg)
+	void covert_to_double(ArgInfo &arg)
 	{
 		double d;
 		switch (arg.fType)
@@ -343,7 +343,7 @@ namespace strbuilder {
 		}
 	}
 
-	void StrBuilder::VFmt(char const *fmt, FmtArg const args[], size_t nargs)
+	void StrBuilder::VFmt(char const *fmt, ArgInfo const args[], size_t nargs)
 	{
 		size_t argIdx = 0;
 
@@ -421,7 +421,7 @@ namespace strbuilder {
 					if (argIdx >= nargs) {
 						throw std::runtime_error("too less arg!");
 					}
-					FmtArg arg = args[argIdx];
+					ArgInfo arg = args[argIdx];
 					argIdx++;
 
 					if (arg.fType == Custom) {
