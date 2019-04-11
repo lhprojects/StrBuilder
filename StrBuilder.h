@@ -60,7 +60,7 @@ namespace strbuilder {
 		LongDouble,
 		Pointer,
 		C_Str, // pointer to char
-		Custom,
+		Custom
 
 	};
 
@@ -408,7 +408,7 @@ private:
 			// you need to implement CustomTrait to support the `Arg` type.
 			// just see CustomTrait<std::string>
 			fmtArg.fToStr = CustomTrait<Arg>::ToStr;
-			fmtArg.fType = ArgType::Custom;
+			fmtArg.fType = /*ArgType::*/Custom;
 		}
 
 		void SetFmt1(ArgInfo &fmtArg, double arg0)
@@ -684,7 +684,7 @@ private:
 		//static const bool value = true;
 
 		static void ToStr(StrAppender &sa, ArgFmt &fmt, long long data) {
-			auto &str = *(std::string*)data;
+			std::string &str = *(std::string*)data;
 			if (fmt.width > str.size()) {
 				size_t off = fmt.width - str.size();
 				sa.AppendN(' ', off);
