@@ -132,8 +132,10 @@ namespace strbuilder {
 		char const *end() const { return Data() + Length(); }
 		char const *cbegin() const { return Data(); }
 		char const *cend() const { return Data() + Length(); }
-		std::reverse_iterator<char const *> crbeign() const { return std::make_reverse_iterator(cend()); }
-		std::reverse_iterator<char const *> crend() const { return std::make_reverse_iterator(cbegin()); }
+		std::reverse_iterator<char const *> rbeign() const { return std::reverse_iterator<char const *>(cend()); }
+		std::reverse_iterator<char const *> rend() const { return std::reverse_iterator<char const *>(cbegin()); }
+		std::reverse_iterator<char const *> crbeign() const { return std::reverse_iterator<char const *>(cend()); }
+		std::reverse_iterator<char const *> crend() const { return std::reverse_iterator<char const *>(cbegin()); }
 
 		StrBuilder();
 		StrBuilder(char const *str);
