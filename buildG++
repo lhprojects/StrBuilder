@@ -1,0 +1,1 @@
+g++ StrBuilder.cpp StrBuilderExamples.cpp -o StrBuilderExamples
