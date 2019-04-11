@@ -150,43 +150,12 @@ namespace strbuilder {
 
 		// apppend nothing, and return this
 		StrBuilder &App();
-
-
-		StrBuilder &App(char const *str) {
-			_Append(str, strlen(str));
-			return *this;
-		}
-
-		StrBuilder &App(std::string const &str) {
-			_Append(str.data(), str.length());
-			return *this;
-		}
-
-		StrBuilder &App(StrBuilder const &str) {
-			_Append(str.Data(), str.Length());
-			return *this;
-		}
-
-		StrBuilder &App(int i) {
-			char str[32];
-			sprintf(str, "%i", i);
-			_Append(str, strlen(str));
-			return *this;
-		}
-
-		StrBuilder &App(unsigned i) {
-			char str[32];
-			sprintf(str, "%u", i);
-			_Append(str, strlen(str));
-			return *this;
-		}
-
-		StrBuilder &App(char c) {
-			char str[32];
-			sprintf(str, "%c", c);
-			_Append(str, strlen(str));
-			return *this;
-		}
+		StrBuilder &App(char const *str);
+		StrBuilder &App(std::string const &str);
+		StrBuilder &App(StrBuilder const &str);
+		StrBuilder &App(int i);
+		StrBuilder &App(unsigned i);
+		StrBuilder &App(char c);
 
 		template<class T1, class T2>
 		StrBuilder &App(T1 v1, T2 v2) {

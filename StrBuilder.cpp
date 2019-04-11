@@ -1,5 +1,6 @@
 #include "StrBuilder.h"
 #include <assert.h>
+#include <stdio.h>
 
 namespace strbuilder {
 
@@ -172,6 +173,53 @@ namespace strbuilder {
 		sb.Append(data.fBuf, n_write);
 	}
 
+
+
+	StrBuilder &StrBuilder::App() {
+		return *this;
+	}
+
+	StrBuilder &StrBuilder::App(char const *str) {
+		_Append(str, strlen(str));
+		return *this;
+	}
+
+	StrBuilder &StrBuilder::App(std::string const &str) {
+		_Append(str.data(), str.length());
+		return *this;
+	}
+
+	StrBuilder &StrBuilder::App(StrBuilder const &str) {
+		_Append(str.Data(), str.Length());
+		return *this;
+	}
+
+	StrBuilder &StrBuilder::App(int i) {
+		char str[32];
+		sprintf(str, "%i", i);
+		_Append(str, strlen(str));
+		return *this;
+	}
+
+	StrBuilder &StrBuilder::App(unsigned i) {
+		char str[32];
+		sprintf(str, "%u", i);
+		_Append(str, strlen(str));
+		return *this;
+	}
+
+	StrBuilder &StrBuilder::App(char c) {
+		char str[32];
+		sprintf(str, "%c", c);
+		_Append(str, strlen(str));
+		return *this;
+	}
+
+
+
+
+
+
 	char *StrBuilder::Clone() const {
 		char *b = new char[fLen + 1];
 		memcpy(b, fBuf, fLen + 1);
@@ -223,9 +271,6 @@ namespace strbuilder {
 		fBuf[0] = '\0';
 	}
 
-	StrBuilder &StrBuilder::App() {
-		return *this;
-	}
 
 	void StrBuilder::_AppendN(char c, size_t len) {
 		if (len != 0) {
