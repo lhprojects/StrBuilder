@@ -1,6 +1,7 @@
 #include "StrBuilder.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdexcept>
 
 namespace strbuilder {
 
@@ -11,11 +12,11 @@ namespace strbuilder {
 			*b++ = flags;
 		}
 		if (width < ((size_t)1 << 31)) {
-			b += sprintf(b, "%zd", width);
+			b += sprintf(b, "%d", (int)width);
 		}
 		if (precision < ((size_t)1 << 31)) {
 			*b++ = '.';
-			b += sprintf(b, "%zd", precision);
+			b += sprintf(b, "%d", (int)precision);
 		}
 		*b++ = specfier;
 		*b++ = '\0';
@@ -358,70 +359,70 @@ namespace strbuilder {
 		switch (arg.fType)
 		{
 		case Char:
-			d = *(char*)&arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (char)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 #ifdef SB_NEWCHAR
 		case Char16:
-			d = *(char16_t*)arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (char16_t)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case Char32:
-			d = *(char32_t*)arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (char32_t)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 #endif
 		case SignedChar:
-			d = *(signed char*)arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (signed char)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case Short:
-			d = *(short*)arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (short)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case Int:
-			d = *(int*)arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (int)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case Long:
-			d = *(long*)arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (long)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case LongLong:
-			d = (double)*(long long*)&arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (double)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case UnsignedChar:
-			d = *(unsigned char*)&arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (unsigned char)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case UnsignedShort:
-			d = *(unsigned short*)&arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (unsigned short)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case UnsignedInt:
-			d = *(unsigned int*)&arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (unsigned int)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case UnsignedLong:
-			d = *(unsigned long*)&arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (unsigned long)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case UnsignedLongLong:
-			d = (double)*(unsigned long long*)&arg.fData;
-			arg.fData = *(long long*)&d;
+			d = (double)(unsigned long long)arg.fData;
+            memcpy(&arg.fData, &d, sizeof(double));
 			arg.fType = Double;
 			break;
 		case Double:
@@ -646,14 +647,23 @@ namespace strbuilder {
 							_Append1(*this, fmt_, nfmt_, (unsigned long long)arg.fData, spec);
 							break;
 						case Double:
-							_Append1(*this, fmt_, nfmt_, *(double*)&arg.fData, spec);
+                            {
+                            double d;
+                            memcpy(&d, &arg.fData, sizeof(double));
+							_Append1(*this, fmt_, nfmt_, d, spec);
+                            }
 							break;
 						case LongDouble:
-							_Append1(*this, fmt_, nfmt_, *(long double*)arg.fData, spec);
-							break;
+							throw std::logic_error("long double not support");
+                            break;
 						case Float:
-							_Append1(*this, fmt_, nfmt_, *(float*)&arg.fData, spec);
-						case C_Str:
+	                        {
+                            float d;
+                            memcpy(&d, &arg.fData, sizeof(float));
+							_Append1(*this, fmt_, nfmt_, d, spec);
+                            }
+						
+                        case C_Str:
 							_Append1(*this, fmt_, nfmt_, (char const*)arg.fData, spec);
 							break;
 						case Pointer:

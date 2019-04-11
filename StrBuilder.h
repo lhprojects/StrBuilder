@@ -413,7 +413,7 @@ private:
 
 		void SetFmt1(ArgInfo &fmtArg, double arg0)
 		{
-			fmtArg.fData = *(long long*)&arg0;
+            memcpy(&fmtArg.fData, &arg0, sizeof(double));
 			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
 
