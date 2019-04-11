@@ -5,6 +5,10 @@
 #include <string.h>
 #include <iterator>
 
+#if defined(__GNUC__) && __GNUC__ > 4
+#define SB_NEWCHAR
+#endif
+
 namespace strbuilder {
 
 	enum ArgType
@@ -95,8 +99,10 @@ namespace strbuilder {
 		bool isString() const;
 
 		static ArgType GetFmtArgType(char c) { return Char; }
+#ifdef SB_NEWCHAR
 		static ArgType GetFmtArgType(char16_t c) { return Char16; }
 		static ArgType GetFmtArgType(char32_t c) { return Char32; }
+#endif
 		static ArgType GetFmtArgType(signed char) { return SignedChar; }
 		static ArgType GetFmtArgType(unsigned char) { return UnsignedChar; }
 		static ArgType GetFmtArgType(short) { return Short; }
@@ -511,7 +517,7 @@ private:
 			fmtArg.fData = arg0;
 			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
-
+#ifdef SB_NEWCHAR
 		void SetFmt1(ArgInfo &fmtArg, char16_t arg0)
 		{
 			fmtArg.fData = arg0;
@@ -523,7 +529,7 @@ private:
 			fmtArg.fData = arg0;
 			fmtArg.fType = ArgInfo::GetFmtArgType(arg0);
 		}
-
+#endif
 		void SetFmt1(ArgInfo &fmtArg, char const *arg0)
 		{
 			fmtArg.fData = (long long)arg0;

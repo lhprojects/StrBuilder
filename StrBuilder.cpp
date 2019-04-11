@@ -317,6 +317,7 @@ namespace strbuilder {
 			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
+#ifdef SB_NEWCHAR
 		case Char16:
 			d = *(char16_t*)arg.fData;
 			arg.fData = *(long long*)&d;
@@ -327,6 +328,7 @@ namespace strbuilder {
 			arg.fData = *(long long*)&d;
 			arg.fType = Double;
 			break;
+#endif
 		case SignedChar:
 			d = *(signed char*)arg.fData;
 			arg.fData = *(long long*)&d;
@@ -560,12 +562,14 @@ namespace strbuilder {
 						case Char:
 							_Append1(*this, fmt_, nfmt_, (char)arg.fData, spec);
 							break;
+#ifdef SB_NEWCHAR
 						case Char16:
 							_Append1(*this, fmt_, nfmt_, (char16_t)arg.fData, spec);
 							break;
 						case Char32:
 							_Append1(*this, fmt_, nfmt_, (char32_t)arg.fData, spec);
 							break;
+#endif
 						case SignedChar:
 							_Append1(*this, fmt_, nfmt_, (signed char)arg.fData, spec);
 							break;
