@@ -10,10 +10,10 @@ namespace strbuilder {
 		if (flags) {
 			*b++ = flags;
 		}
-		if (width < SIZE_MAX / 2) {
+		if (width < ((size_t)1 << 31)) {
 			b += sprintf(b, "%zd", width);
 		}
-		if (precision < SIZE_MAX / 2) {
+		if (precision < ((size_t)1 << 31)) {
 			*b++ = '.';
 			b += sprintf(b, "%zd", precision);
 		}
