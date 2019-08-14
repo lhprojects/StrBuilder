@@ -2,9 +2,12 @@
 
 ## Basic Usage
 ```
-StrBuilder sb;
-sb.Fmt("%d %d %d %d %d", 1, 2, 3, 4, 5);
-printf("%s", sb.Data());
+// use StrBuilder
+printf("%s", StrBuilder().Fmt("%d %d %d %d %d", 1, 2, 3, 4, 5).c_str());
+// use free function Fmt
+printf("%s", Fmt("%d %d %d %d %d", 1, 2, 3, 4, 5).c_str());
+// use PrintLn
+PrintLn("%d %d %d %d %d", 1, 2, 3, 4, 5);
 ```
 ## Variable number of arguments
 ```
