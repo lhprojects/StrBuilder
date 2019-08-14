@@ -634,6 +634,14 @@ private:
 
 	void StdOut(char const *str);
 
+
+	inline void PrintLn(char const *fmt) {
+		StrBuilder sb;
+		sb.FmtLn(fmt);
+		StdOut(sb.Data());
+	}
+
+
 	template<class T1>
 	void PrintLn(char const *fmt, T1 const &v1) {
 		StrBuilder sb;

@@ -3,7 +3,8 @@
 #include <chrono>
 using namespace strbuilder;
 
-#define ASSERT(x, y) if(strcmp(x, y) != 0) { printf("failed %5d: %s != %s\n", __LINE__, x, y); }
+int ErrCount = 0;
+#define ASSERT(x, y) if(strcmp(x, y) != 0) { ErrCount+=1; printf("failed %5d: %s != %s\n", __LINE__, x, y); }
 
 int main() {
 
@@ -220,19 +221,7 @@ int main() {
 
 	}
 
-	{
-		std::string lstr = "ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
-		lstr += lstr;
-		auto t0 = std::chrono::high_resolution_clock::now();
-		for (int i = 0; i < 10000; ++i)
-		{
-			sb.Fmt(lstr.c_str());
-			sb.Clear();
-		}
-		auto t1 = std::chrono::high_resolution_clock::now();
-		auto t3 = t1 - t0;
-		PrintLn("benchmark %20d", (t1 - t0).count());
-	}
 
-
+	PrintLn("%d Test Failed!", ErrCount);
+	PrintLn("Bye");
 }
