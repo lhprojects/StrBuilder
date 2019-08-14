@@ -127,6 +127,7 @@ namespace strbuilder {
 		// simulate the std::string
 		std::size_t size() const { return Length(); }
 		char const *c_str() const { return Data(); }
+		/// ends with '\0', like new standard std::string data
 		char const *data() const { return Data(); }
 		char const *begin() const { return Data(); }
 		char const *end() const { return Data() + Length(); }
@@ -142,27 +143,40 @@ namespace strbuilder {
 		StrBuilder(std::string const &str);
 		~StrBuilder();
 
-		// you need to delete the return pointer
+		/// Get a copy of the internal data
+		/// delete it by yourself
 		char *Clone() const;
+		/// same as dataf()
 		char const *Data() const;
+		/// Same as length()
 		size_t Length() const;
+		/// clear internal data
 		void Clear();
 
-		// apppend nothing, and return this
+		/// apppend nothing, and return this
 		StrBuilder &App();
+		/// apppend string, and return this
 		StrBuilder &App(char const *str);
+		/// apppend std::string, and return this
 		StrBuilder &App(std::string const &str);
+		/// apppend StrBuilder, and return this
 		StrBuilder &App(StrBuilder const &str);
+		/// apppend integer, and return this
 		StrBuilder &App(int i);
+		/// apppend unsigned, and return this
 		StrBuilder &App(unsigned i);
+		/// apppend char, and return this
 		StrBuilder &App(char c);
 
+		/// append args
 		template<class T1, class T2>
 		StrBuilder &App(T1 v1, T2 v2) {
 			App(v1);
 			App(v2);
 			return *this;
 		}
+
+		/// append args
 		template<class T1, class T2, class T3>
 		StrBuilder &App(T1 v1, T2 v2, T3 v3) {
 			App(v1);
@@ -170,6 +184,8 @@ namespace strbuilder {
 			App(v3);
 			return *this;
 		}
+
+		/// append args
 		template<class T1, class T2, class T3, class T4>
 		StrBuilder &App(T1 v1, T2 v2, T3 v3, T4 v4) {
 			App(v1);
@@ -178,6 +194,8 @@ namespace strbuilder {
 			App(v4);
 			return *this;
 		}
+
+		/// append args
 		template<class T1, class T2, class T3, class T4, class T5>
 		StrBuilder &App(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5) {
 			App(v1);
@@ -187,6 +205,8 @@ namespace strbuilder {
 			App(v5);
 			return *this;
 		}
+
+		/// append args
 		template<class T1, class T2, class T3, class T4, class T5, class T6>
 		StrBuilder &App(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5, T6 v6) {
 			App(v1);
@@ -199,6 +219,8 @@ namespace strbuilder {
 		}
 
 #ifdef SB_VARARG
+		/// append args
+		/// hope your compiler is not too old
 		template<class T1, class T2, class T3, class T4, class T5, class... Args>
 		StrBuilder &App(T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4, T5 const &v5, Args const &... args) {
 			App(v1);
@@ -211,6 +233,7 @@ namespace strbuilder {
 		}
 #endif
 
+		/// format with formatter fmt
 		StrBuilder &Fmt(char const * const fmt)
 		{
 			ArgInfo fmtArgs[1];
@@ -218,6 +241,7 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
 		template<class T1>
 		StrBuilder &Fmt(char const * const fmt, T1 const &v1)
 		{
@@ -227,6 +251,7 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
 		template<class T1, class T2>
 		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2)
 		{
@@ -237,6 +262,7 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
 		template<class T1, class T2, class T3>
 		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3)
 		{
@@ -248,6 +274,7 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
 		template<class T1, class T2, class T3, class T4>
 		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4)
 		{
@@ -260,6 +287,7 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
 		template<class T1, class T2, class T3, class T4, class T5>
 		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4, T5 const &v5)
 		{
@@ -273,6 +301,7 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
 		template<class T1, class T2, class T3, class T4, class T5, class T6>
 		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2,
 			T3 const &v3, T4 const &v4, T5 const &v5, T6 const &v6)
@@ -292,9 +321,15 @@ namespace strbuilder {
 
 		//private:
 
+		/// This is private function.
+		/// we let it be public for testing,
+		/// but you don't use this function.
 		void SetFmt(ArgInfo &fmt) {
 		}
 
+		/// This is private function.
+		/// we let it be public for testing,
+		/// but you don't use this function.
 		template<class T1, class... Args>
 		void SetFmt(ArgInfo &fmt, T1 const &t1, Args const &... args) {
 			SetFmt1(fmt, t1);
@@ -302,6 +337,7 @@ namespace strbuilder {
 		}
 	public:
 
+		/// format with formatter fmt
 		template<class T1, class T2, class T3, class T4, class T5, class T6, class... Args>
 		StrBuilder &Fmt(char const * const fmt, T1 const &v1, T2 const &v2,
 			T3 const &v3, T4 const &v4, T5 const &v5, T6 const &v6, Args const &... args)
@@ -319,6 +355,8 @@ namespace strbuilder {
 		}
 #endif
 
+		/// format with formatter fmt
+		/// a '\n' added automatically
 		StrBuilder &FmtLn(char const * const fmt)
 		{
 			Fmt(fmt);
@@ -326,6 +364,8 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
+		/// a '\n' added automatically
 		template<class T1>
 		StrBuilder &FmtLn(char const * const fmt, T1 const &v1)
 		{
@@ -334,6 +374,8 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
+		/// a '\n' added automatically
 		template<class T1, class T2>
 		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2)
 		{
@@ -342,6 +384,8 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
+		/// a '\n' added automatically
 		template<class T1, class T2, class T3>
 		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3)
 		{
@@ -350,6 +394,8 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
+		/// a '\n' added automatically
 		template<class T1, class T2, class T3, class T4>
 		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4)
 		{
@@ -358,6 +404,8 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
+		/// a '\n' added automatically
 		template<class T1, class T2, class T3, class T4, class T5>
 		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2, T3 const &v3, T4 const &v4, T5 const &v5)
 		{
@@ -366,6 +414,8 @@ namespace strbuilder {
 			return *this;
 		}
 
+		/// format with formatter fmt
+		/// a '\n' added automatically
 		template<class T1, class T2, class T3, class T4, class T5, class T6>
 		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2,
 			T3 const &v3, T4 const &v4, T5 const &v5, T6 const &v6)
@@ -377,6 +427,8 @@ namespace strbuilder {
 
 
 #ifdef SB_VARARG
+		/// format with formatter fmt
+		/// a '\n' added automatically
 		template<class T1, class T2, class T3, class T4, class T5, class T6, class... Args>
 		StrBuilder &FmtLn(char const * const fmt, T1 const &v1, T2 const &v2,
 			T3 const &v3, T4 const &v4, T5 const &v5, T6 const &v6, Args const &... args)
@@ -386,9 +438,14 @@ namespace strbuilder {
 		}
 #endif
 
+		/// format with formatter fmt
+		/// this is high level function, before you use this function
+		/// you need undertand the code firstly
 		void VFmt(char const *fmt, ArgInfo const args[], size_t nargs);
 
+		// appends str of length len
 		void Append(char const *str, size_t len) { _Append(str, len); }
+		// appends c, repeat len times
 		void AppendN(char c, size_t len) { _AppendN(c, len); }
 	
 
