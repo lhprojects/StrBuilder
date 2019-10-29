@@ -133,6 +133,7 @@ int main() {
 	sb.Clear();
 
 	try {
+		// should not throw
 		sb.Fmt("", 1);
 	}
 	catch (...) {
@@ -141,6 +142,7 @@ int main() {
 	sb.Clear();
 
 	try {
+		// throw exception
 		sb.Fmt("%d%d", 1);
 		printf("faield %s", R"--(	sb.Fmt("%d%d", 1)		)--");
 	}
