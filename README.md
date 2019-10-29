@@ -20,6 +20,7 @@ sb.Fmt("%f %f %f %f %f %f %f %f %f", 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.);
 ### Check number of arguments
 ```
 	try {
+		// should not throw
 		sb.Fmt("", 1);
 	}
 	catch (...) {
@@ -28,6 +29,7 @@ sb.Fmt("%f %f %f %f %f %f %f %f %f", 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.);
 	sb.Clear();
 
 	try {
+		// throw exception
 		sb.Fmt("%d%d", 1);
 		printf("faield %s", R"--(	sb.Fmt("%d%d", 1)		)--");
 	}
